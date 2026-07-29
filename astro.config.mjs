@@ -1,9 +1,14 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import { loadEnv } from 'vite';
 
 // Le widget anti-spam n'est servi que si la clé publique existe au build ; la
 // politique de sécurité suit, pour ne pas ouvrir un domaine tiers inutilement.
-const turnstile = Boolean(process.env.PUBLIC_TURNSTILE_SITEKEY);
+// Ce fichier est évalué avant que les .env soient chargés, d'où loadEnv : sans
+// lui, une clé posée en local ferait apparaître le widget dans la page sans
+// ouvrir challenges.cloudflare.com dans la politique, et le script serait bloqué.
+const { PUBLIC_TURNSTILE_SITEKEY } = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
+const turnstile = Boolean(PUBLIC_TURNSTILE_SITEKEY);
 
 export default defineConfig({
   site: 'https://variete-de-saveurs.fr',

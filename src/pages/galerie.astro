@@ -1,0 +1,387 @@
+---
+import { Image, getImage } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+
+// Les photos vivent dans src/assets/galerie/<famille>/<slug>.jpg : ajouter une photo
+// se résume à déposer le fichier dans le bon dossier, Astro l'optimise au build.
+const fichiers = import.meta.glob<ImageMetadata>('../assets/galerie/*/*.jpg', {
+  eager: true,
+  import: 'default',
+});
+
+// Ordre d'affichage et libellés — mêmes noms que les groupes de src/data/carte.yaml
+const FAMILLES = [
+  { cle: 'gateaux', nom: 'Gâteaux' },
+  { cle: 'evenement', nom: "Pièces d'événement" },
+  { cle: 'buffet-sale', nom: 'Buffet salé' },
+  { cle: 'buffet-sucre', nom: 'Buffet sucré' },
+  { cle: 'petites-patisseries', nom: 'Petites pâtisseries' },
+] as const;
+
+// Alt rédigé à la main : c'est ce que lisent les lecteurs d'écran et Google Images.
+const LEGENDES: Record<string, string> = {
+  'fraisier-creme-fraises': 'Fraisier couvert de rosaces de crème, fraises fraîches et éclats de feuille d’or',
+  'gateau-kinder-bueno': 'Gâteau au chocolat, coulée de ganache et barres Kinder Bueno sur le dessus',
+  'tarte-fraises-rosace': 'Tarte aux fraises dont les fruits sont disposés en rosace',
+  'tarte-citron-meringuee': 'Tarte au citron meringuée, pointes de meringue dorées au chalumeau et zestes de citron vert',
+  'entremets-mangue-glacage': 'Entremets à la mangue sous un glaçage miroir jaune',
+  'gateau-blanc-framboises': 'Gâteau à la crème blanche, framboises et cœurs en chocolat',
+  'gateau-coeur-mangue': 'Gâteau blanc décoré de dômes à la mangue disposés en cœur',
+  'gateau-rose-perle': 'Gâteau rose pâle bordé de perles de crème, avec un nœud',
+  'gateau-queen-deux-tons': 'Gâteau deux étages gris anthracite, lettrage doré et couronne',
+  'number-cake-macarons': 'Number cake garni de macarons roses et de chocolats',
+  'number-cake-40-ans': 'Number cake en forme de 40, crème, fraises et macarons',
+  'gateau-superman': 'Gâteau bleu à coulée de chocolat, décor Superman',
+  'gateau-stitch': 'Gâteau bleu turquoise sur le thème de Stitch',
+  'gateau-princesses': 'Gâteau rose surmonté d’un château et de figurines de princesses',
+  'gateau-roi-lion': 'Gâteau jaune sur le thème du Roi Lion',
+  'gateau-halloween': 'Gâteau d’Halloween, coulée de caramel et citrouilles',
+  'gateau-bapteme-oursons': 'Gâteau bicolore rose et bleu décoré d’oursons et de ballons en sucre',
+  'gateau-photo-comestible': 'Gâteau surmonté d’une photo imprimée en impression comestible',
+  'gateau-drip-rouge': 'Gâteau blanc à coulée rouge, décor de série télévisée',
+  'gateau-carre-fleurs': 'Gâteau carré crème, fleurs pastel travaillées à la poche',
+  'deux-etages-ferme': 'Gâteau deux étages sur le thème de la ferme, animaux et tracteur en sucre',
+  'deux-etages-tropical': 'Gâteau deux étages tropical, fleurs d’hibiscus et palmiers',
+  'deux-etages-schtroumpfs': 'Gâteau deux étages décoré de champignons et de figurines',
+  'gateau-sculpte-cars': 'Gâteau sculpté en forme de personnage de dessin animé',
+  'gateau-sculpte-bouteille': 'Gâteau sculpté en forme de bouteille avec son étiquette',
+  'gateau-livre-ouvert': 'Gâteau sculpté en livre ouvert, pages blanches encadrées de dorures et roses à la poche',
+  'grand-rectangle-anniversaire': 'Grand gâteau rectangulaire pour un anniversaire de mariage, roses à la poche',
+  'piece-montee-choux': 'Pièce montée de choux dressée sur présentoir',
+  'plateaux-composes': 'Deux plateaux de buffet salé : mini-burgers, wraps, samoussas et mini-pizzas',
+  'plateau-assortiment': 'Plateau de buffet salé garni en rangées serrées',
+  'plateau-varie': 'Plateau de buffet salé mêlant feuilletés, tartelettes et roulés',
+  'plateau-brochettes': 'Plateau de buffet salé avec brochettes et bouchées assorties',
+  'mini-burgers': 'Rangées de mini-burgers aux graines de sésame',
+  'samoussas': 'Samoussas dorés disposés en quinconce',
+  'wraps': 'Wraps coupés et piqués, alignés sur un plateau',
+  'mini-quiches': 'Mini-quiches dorées sorties du four',
+  'mini-entremets-roses': 'Plaque de mini-choux et de mini-entremets au glaçage rosé',
+  'mini-choux': 'Plaque de mini-choux dorés',
+  'mini-tartelettes': 'Mini-tartelettes aux fruits alignées sur une plaque',
+  'brochettes-fruits': 'Brochettes de fruits frais de saison',
+  'macarons': 'Macarons rose pâle et vert d’eau',
+  'choux-plateau': 'Grand plateau de choux garnis',
+  'mini-muffins': 'Mini-muffins dorés rangés en lignes',
+  'assortiment-mignardises': 'Assortiment de mignardises : éclairs, choux et tartelettes aux fraises',
+  'cupcakes-coeurs': 'Cupcakes surmontés de crème rose et de cœurs en sucre',
+  'cupcakes-chocolat': 'Cupcakes à la crème au chocolat travaillée en rosace',
+  'cake-pops': 'Cake pops glacés rose et bleu pour une baby shower',
+  'cake-pops-halloween': 'Cake pops d’Halloween en forme de citrouilles et de fantômes',
+  'donuts-decores': 'Donuts glacés et décorés sur le thème des dinosaures',
+  'sables-decores': 'Sablés décorés au glaçage pour une baby shower',
+};
+
+type Photo = { slug: string; famille: string; src: ImageMetadata };
+
+const photos: Photo[] = Object.entries(fichiers).map(([chemin, src]) => {
+  const [, famille, fichier] = chemin.match(/galerie\/([^/]+)\/([^/]+)\.jpg$/)!;
+  return { slug: fichier!, famille: famille!, src };
+});
+
+// Ordre : famille par famille, pour que « Tout » reste lisible
+const ordonnees = FAMILLES.flatMap((f) => photos.filter((p) => p.famille === f.cle));
+const compte = (cle: string) => photos.filter((p) => p.famille === cle).length;
+
+const legende = (slug: string) =>
+  LEGENDES[slug] ?? slug.replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase());
+
+// Version large pour la visionneuse, générée au build comme le reste.
+// Plafonnée à la largeur d'origine : plusieurs photos font moins de 1400 px.
+const grands = await Promise.all(
+  // quality 72 : les plateaux de buffet sont des textures denses qui montaient
+  // à 680 Ko à la qualité par défaut, pour un écart invisible à l'œil.
+  ordonnees.map((p) =>
+    getImage({ src: p.src, width: Math.min(1400, p.src.width), format: 'webp', quality: 72 })
+  )
+);
+---
+<Layout
+  titre="La galerie — Variété de Saveurs"
+  description="Les gâteaux, pièces d'événement et buffets réalisés par Variété de Saveurs à Montendre. Photos de commandes réelles."
+>
+  <section class="section galerie-page" aria-labelledby="galerie-title">
+    <div class="wrap">
+      <h1 class="section-title" id="galerie-title" data-reveal>La galerie</h1>
+      <p class="section-intro" data-reveal>
+        Des commandes réelles, sorties du fournil. Votre idée n'est pas dans la liste&nbsp;?
+        Elle se fait quand même, <a href="/commander/">décrivez-la</a>.
+      </p>
+
+      <div class="galerie">
+        <fieldset class="filtres" data-reveal>
+          <legend class="sr-only">Filtrer par famille</legend>
+          <input class="sr-only" type="radio" name="famille" id="f-tout" checked />
+          <label for="f-tout">Tout <span>{photos.length}</span></label>
+          {FAMILLES.map((f) => (
+            <Fragment>
+              <input class="sr-only" type="radio" name="famille" id={`f-${f.cle}`} />
+              <label for={`f-${f.cle}`}>{f.nom} <span>{compte(f.cle)}</span></label>
+            </Fragment>
+          ))}
+        </fieldset>
+
+        <ul class="grille">
+          {ordonnees.map((p, i) => (
+            <li data-famille={p.famille}>
+              <button
+                type="button"
+                class="vignette"
+                data-grand={grands[i]!.src}
+                data-largeur={grands[i]!.attributes.width}
+                data-hauteur={grands[i]!.attributes.height}
+              >
+                <Image
+                  src={p.src}
+                  alt={legende(p.slug)}
+                  width={760}
+                  widths={[380, 760]}
+                  sizes="(max-width: 559px) 46vw, (max-width: 899px) 45vw, 30vw"
+                  format="webp"
+                  loading={i < 6 ? 'eager' : 'lazy'}
+                />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <dialog id="zoom" aria-label="Photo agrandie">
+        <img id="zoom-img" alt="" />
+        <p id="zoom-legende"></p>
+        <button type="button" class="zoom-btn zoom-prec" data-pas="-1" aria-label="Photo précédente">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="zoom-btn zoom-suiv" data-pas="1" aria-label="Photo suivante">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="zoom-btn zoom-fermer" aria-label="Fermer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </button>
+      </dialog>
+    </div>
+  </section>
+
+  <section class="finale" aria-labelledby="finale-title">
+    <div class="wrap finale-inner">
+      <h2 id="finale-title" data-reveal>Une occasion à fêter&nbsp;?</h2>
+      <div data-reveal>
+        <a class="btn btn-gold btn-big" href="/commander/">Décrire mon gâteau</a>
+      </div>
+      <p class="finale-note" data-reveal>Devis gratuit · Réponse sous 48&nbsp;h</p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .galerie-page { padding-block: clamp(3rem, 6vw, 4.5rem) var(--section-pad); }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+
+  /* ============ Filtres ============ */
+  .filtres {
+    display: flex; flex-wrap: wrap; gap: 0.6rem;
+    border: none; padding: 0; margin: 0 0 clamp(1.8rem, 4vw, 2.6rem);
+  }
+
+  .filtres label {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    min-height: 44px; padding: 0.5rem 1.2rem;
+    border: 2px solid var(--bord); border-radius: 999px;
+    background: var(--blanc); color: var(--ink);
+    font-weight: 600; font-size: 0.95rem; cursor: pointer;
+    transition: background-color 0.3s var(--ease-out), border-color 0.3s var(--ease-out), color 0.3s var(--ease-out);
+  }
+
+  .filtres label span {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.82rem; font-weight: 500; color: var(--muted);
+  }
+
+  .filtres label:hover { border-color: var(--or); }
+
+  .filtres input:checked + label {
+    background: var(--rouge); border-color: var(--rouge); color: var(--blanc);
+  }
+
+  .filtres input:checked + label span { color: var(--creme); }
+
+  .filtres input:focus-visible + label {
+    outline: 3px solid var(--rouge); outline-offset: 3px;
+  }
+
+  /* ============ Mosaïque ============ */
+  /* Colonnes CSS plutôt qu'une grille : les photos gardent leur cadrage d'origine.
+     Un carré décapitait les gâteaux à étages, qui sont tous en portrait. */
+  .grille {
+    columns: 260px 4;
+    column-gap: clamp(0.7rem, 1.6vw, 1.1rem);
+  }
+
+  .grille li {
+    break-inside: avoid;
+    margin-bottom: clamp(0.7rem, 1.6vw, 1.1rem);
+    overflow: clip;
+    border-radius: 16px;
+    border: 1px solid var(--bord);
+    background: var(--surface-dim);
+  }
+
+  .vignette {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
+  }
+
+  .vignette:focus-visible { outline: 3px solid var(--rouge); outline-offset: 3px; }
+
+  .grille img {
+    width: 100%;
+    height: auto;
+    transition: transform 0.5s var(--ease-out);
+  }
+
+  /* ============ Visionneuse ============ */
+  #zoom {
+    max-width: none; max-height: none;
+    width: 100%; height: 100%;
+    padding: 0; border: none; background: none; overflow: clip;
+    /* align-content, pas seulement align-items : sinon l'image et la légende
+       se répartissent la hauteur et la légende part en bas de l'écran. */
+    justify-items: center;
+    align-content: center;
+  }
+
+  #zoom:not([open]) { display: none; }
+  #zoom[open] { display: grid; }
+
+  #zoom::backdrop { background: rgb(34 8 13 / 0.92); }
+
+  #zoom-img {
+    max-width: min(92vw, 1400px);
+    max-height: 78vh;
+    width: auto; height: auto;
+    border-radius: 10px;
+    background: var(--nuit-fond);
+  }
+
+  #zoom-legende {
+    max-width: min(92vw, 60ch);
+    margin-top: 1rem;
+    color: var(--creme);
+    font-size: 0.95rem;
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  .zoom-btn {
+    position: absolute;
+    display: flex; align-items: center; justify-content: center;
+    width: 52px; height: 52px; padding: 0;
+    border: 2px solid rgb(246 240 226 / 0.35);
+    border-radius: 999px;
+    background: rgb(34 8 13 / 0.65);
+    color: var(--creme);
+    cursor: pointer;
+    transition: background-color 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+  }
+
+  .zoom-btn:hover { background: var(--rouge); border-color: var(--rouge); }
+  .zoom-btn:focus-visible { outline: 3px solid var(--or-vif); outline-offset: 3px; }
+  .zoom-btn svg { width: 24px; height: 24px; }
+
+  .zoom-fermer { top: 1rem; right: 1rem; }
+  .zoom-prec { left: 1rem; top: 50%; transform: translateY(-50%); }
+  .zoom-suiv { right: 1rem; top: 50%; transform: translateY(-50%); }
+
+  @media (max-width: 559px) {
+    .zoom-prec { left: 0.5rem; }
+    .zoom-suiv { right: 0.5rem; }
+    .zoom-btn { width: 46px; height: 46px; }
+  }
+
+  @media (hover: hover) {
+    .grille li:hover img { transform: scale(1.04); }
+  }
+
+  /* Sur petit écran, six pastilles pleine taille poussaient la première photo
+     sous la ligne de flottaison : pastilles resserrées et deux colonnes. */
+  @media (max-width: 559px) {
+    .filtres { gap: 0.45rem; }
+    .filtres label { padding: 0.5rem 0.85rem; font-size: 0.875rem; }
+    .grille { columns: 2; }
+    .grille li { border-radius: 12px; }
+  }
+
+  /* La visionneuse est une amélioration : sans JS, la grille reste consultable */
+  html:not(.js) .vignette { cursor: default; }
+  html:not(.js) #zoom { display: none; }
+
+  /* Filtrage sans JS : le :checked du fieldset pilote l'affichage de la grille */
+  .galerie:has(#f-gateaux:checked) li:not([data-famille="gateaux"]),
+  .galerie:has(#f-evenement:checked) li:not([data-famille="evenement"]),
+  .galerie:has(#f-buffet-sale:checked) li:not([data-famille="buffet-sale"]),
+  .galerie:has(#f-buffet-sucre:checked) li:not([data-famille="buffet-sucre"]),
+  .galerie:has(#f-petites-patisseries:checked) li:not([data-famille="petites-patisseries"]) {
+    display: none;
+  }
+</style>
+
+<script>
+  const dialogue = document.getElementById('zoom') as HTMLDialogElement;
+  const grande = document.getElementById('zoom-img') as HTMLImageElement;
+  const texte = document.getElementById('zoom-legende') as HTMLElement;
+  const vignettes = Array.from(document.querySelectorAll<HTMLButtonElement>('.vignette'));
+
+  // Ne circule que dans la famille affichée : une photo masquée par le filtre
+  // n'a pas de boîte, donc pas d'offsetParent.
+  let visibles: HTMLButtonElement[] = [];
+  let position = 0;
+
+  function montrer(i: number) {
+    const b = visibles[i];
+    if (!b) return;
+    position = i;
+    const img = b.querySelector('img')!;
+    grande.src = b.dataset.grand!;
+    grande.width = Number(b.dataset.largeur);
+    grande.height = Number(b.dataset.hauteur);
+    grande.alt = img.alt;
+    texte.textContent = img.alt;
+    const seule = visibles.length < 2;
+    dialogue.querySelectorAll<HTMLButtonElement>('.zoom-prec, .zoom-suiv').forEach((f) => (f.hidden = seule));
+  }
+
+  vignettes.forEach((b) =>
+    b.addEventListener('click', () => {
+      visibles = vignettes.filter((v) => v.offsetParent !== null);
+      montrer(visibles.indexOf(b));
+      dialogue.showModal();
+    })
+  );
+
+  dialogue.querySelectorAll<HTMLButtonElement>('[data-pas]').forEach((f) =>
+    f.addEventListener('click', () =>
+      montrer((position + Number(f.dataset.pas) + visibles.length) % visibles.length)
+    )
+  );
+
+  dialogue.querySelector('.zoom-fermer')!.addEventListener('click', () => dialogue.close());
+
+  // Clic hors de l'image : la cible est le dialogue lui-même
+  dialogue.addEventListener('click', (e) => {
+    if (e.target === dialogue) dialogue.close();
+  });
+
+  dialogue.addEventListener('keydown', (e) => {
+    if (visibles.length < 2) return;
+    if (e.key === 'ArrowLeft') montrer((position - 1 + visibles.length) % visibles.length);
+    if (e.key === 'ArrowRight') montrer((position + 1) % visibles.length);
+  });
+</script>

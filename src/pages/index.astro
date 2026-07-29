@@ -1,0 +1,642 @@
+---
+import { Image } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+import pieceMontee from '../assets/generated/gen-hero-piece-montee.png';
+import macaronA from '../assets/generated/gen-hero-macaron-a.png';
+import macaronB from '../assets/generated/gen-hero-macaron-b.png';
+import archeEvenement from '../assets/generated/gen-arche-evenement.png';
+import archeDouceurs from '../assets/generated/gen-arche-douceurs.png';
+import buffet from '../assets/generated/gen-buffet.png';
+import partFraisier from '../assets/generated/gen-part-fraisier.png';
+import { parse } from 'yaml';
+import carteRaw from '../data/carte.yaml?raw';
+
+type Produit = { nom: string; prix: string; unite?: string };
+type Groupe = { nom: string; produits: Produit[] };
+const carte = parse(carteRaw) as { groupes: Groupe[] };
+// L'extrait tease 4 gâteaux + les deux derniers groupes (petites pâtisseries,
+// pièces d'événement) : l'entrée de gamme et le haut de gamme promis par le hero.
+const premier = carte.groupes[0]!;
+const extrait = [{ nom: premier.nom, produits: premier.produits.slice(0, 4) }, ...carte.groupes.slice(-2)];
+
+// « 28 € » → montant seul ; « à partir de 60 € » → préfixe en petit ; « sur devis » → pastille
+function decouperPrix(prix: string): { tag: boolean; prefixe?: string; montant: string } {
+  if (prix.toLowerCase() === 'sur devis') return { tag: true, montant: prix };
+  const m = prix.match(/^(à partir de)\s+(.+)$/i);
+  if (m) return { tag: false, prefixe: m[1], montant: m[2]! };
+  return { tag: false, montant: prix };
+}
+
+// SEO local : données structurées (ARCHI §6)
+const localBusiness = {
+  '@context': 'https://schema.org',
+  '@type': 'Bakery',
+  name: 'Variété de Saveurs',
+  description: "Pâtisserie artisanale sur commande : entremets, macarons, buffets et pièces d'événement.",
+  telephone: '+33516483243',
+  email: 'contact@variete-de-saveurs.fr',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '2 impasse du Printemps',
+    postalCode: '17130',
+    addressLocality: 'Montendre',
+    addressCountry: 'FR',
+  },
+  openingHours: ['Mo-Sa 14:30-18:00'],
+  areaServed: 'Montendre et 30 km alentour',
+  sameAs: ['https://www.facebook.com/p/Vari%C3%A9t%C3%A9-De-Saveurs-100094733802848/'],
+};
+---
+<Layout
+  titre="Variété de Saveurs — Pâtisserie artisanale, sur commande"
+  description="Entremets, macarons, buffets et pièces d'événement, préparés à la commande dans notre fournil. Devis gratuit, réponse sous 48 h."
+>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(localBusiness)} />
+
+  <!-- ============ Héro — drench rouge ============ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="hero-kicker">Pâtisserie artisanale, sur commande</p>
+        <h1 id="hero-title">Des gâteaux <span class="hl">faits maison</span> pour vos plus belles occasions</h1>
+        <p class="hero-sub">Entremets, macarons, buffets et pièces d'événement, préparés à la commande dans notre fournil. Choisissez dans la carte ou décrivez votre envie sur mesure&nbsp;: tout se commande au même endroit.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-gold btn-big" href="/commander/">Commander</a>
+          <a class="btn btn-outline-light btn-big" href="/carte/">Voir la carte</a>
+        </div>
+        <p class="hero-note">Devis gratuit · Réponse sous 48&nbsp;h · Retrait à Montendre ou livraison (30&nbsp;km)</p>
+      </div>
+
+      <div class="hero-media">
+        <Image src={pieceMontee} alt="Pièce montée à trois étages, glaçage crème, choux dorés et fleurs, peinte à la gouache" widths={[470, 940]} sizes="(max-width: 899px) 88vw, 470px" format="webp" loading="eager" fetchpriority="high" />
+        <div class="sticker" aria-hidden="true">
+          <span class="sticker-small">Devis gratuit</span>
+          <svg class="sticker-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8l2.9 6.5 7.1.7-5.3 4.8 1.5 7L12 17.3l-6.2 3.5 1.5-7L2 9l7.1-.7z" fill="currentColor"/></svg>
+          <span class="sticker-big">48&nbsp;h</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Marquee ============ -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      {[0, 1].map(() => (
+        <span class="marquee-chunk">
+          {[0, 1, 2, 3].map(() => (
+            <Fragment>
+              Fraisier <span class="mq-star">✦</span> Kinder bueno <span class="mq-star">✦</span> Red velvet <span class="mq-star">✦</span> Forêt noire <span class="mq-star">✦</span> Number cake <span class="mq-star">✦</span>
+            </Fragment>
+          ))}
+        </span>
+      ))}
+    </div>
+  </div>
+
+  <!-- ============ Fournil — grille cassée ============ -->
+  <section class="section fournil" aria-labelledby="fournil-title">
+    <div class="wrap">
+      <h2 class="section-title" id="fournil-title" data-reveal>Ce qui sort de notre fournil</h2>
+
+      <div class="specs">
+        <svg class="sparkle sparkle-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.7 5.3 2.7 7.3 8 8-5.3.7-7.3 2.7-8 8-.7-5.3-2.7-7.3-8-8 5.3-.7 7.3-2.7 8-8z" fill="currentColor"/></svg>
+        <svg class="sparkle sparkle-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.7 5.3 2.7 7.3 8 8-5.3.7-7.3 2.7-8 8-.7-5.3-2.7-7.3-8-8 5.3-.7 7.3-2.7 8-8z" fill="currentColor"/></svg>
+
+        <article class="spec spec-a" data-reveal>
+          <Image src={archeEvenement} alt="Gâteau de mariage à deux étages couronné de roses, sur un présentoir" widths={[520, 1024]} sizes="(max-width: 899px) 88vw, 520px" format="webp" loading="lazy" />
+          <div class="spec-body">
+            <h3>Gâteaux d'événement</h3>
+            <p>Mariages, anniversaires, baptêmes&nbsp;: des pièces montées à votre image.</p>
+          </div>
+        </article>
+
+        <article class="spec spec-b" data-reveal>
+          <Image src={archeDouceurs} alt="Macarons empilés et tartelette au citron meringuée" widths={[400, 800]} sizes="(max-width: 899px) 82vw, 400px" format="webp" loading="lazy" />
+          <div class="spec-body">
+            <h3>Douceurs du moment</h3>
+            <p>Macarons, entremets et tartes, au rythme des saisons.</p>
+          </div>
+        </article>
+
+        <article class="spec spec-c" data-reveal>
+          <Image src={buffet} alt="Buffet de canapés et mignardises sucrées et salées, dressé pour une réception" widths={[560, 1120]} sizes="(max-width: 899px) 74vw, 560px" format="webp" loading="lazy" />
+          <div class="spec-body">
+            <h3>Buffets à volonté</h3>
+            <p>Canapés et mignardises, sucrées comme salées, dressés pour vos réceptions.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ La carte — chunky rows ============ -->
+  <section class="section carte" id="carte" aria-labelledby="carte-title">
+    <div class="wrap">
+      <h2 class="section-title" id="carte-title" data-reveal>La carte</h2>
+
+      <div class="carte-panel" data-reveal>
+        {extrait.map((groupe) => (
+          <div class="carte-group">
+            <h3>{groupe.nom}</h3>
+            <ul>
+              {groupe.produits.map((p) => {
+                const prix = decouperPrix(p.prix);
+                return (
+                  <li class="carte-row">
+                    <div class="row-main">
+                      <span class="row-name">{p.nom}</span>
+                      {p.unite && <span class="row-meta">{p.unite}</span>}
+                    </div>
+                    <span class="row-price">
+                      {prix.tag
+                        ? <span class="tag-devis">sur devis</span>
+                        : prix.prefixe
+                          ? <Fragment><small>{prix.prefixe}</small>{prix.montant}</Fragment>
+                          : prix.montant}
+                    </span>
+                    <a class="row-cta" href={`/commander/?produit=${encodeURIComponent(p.nom)}`} aria-label={`Commander : ${p.nom}`}>Commander</a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div class="carte-more" data-reveal>
+        <a class="btn btn-outline-red" href="/carte/">Voir toute la carte</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Étapes ============ -->
+  <section class="section etapes" aria-labelledby="etapes-title">
+    <div class="wrap">
+      <h2 class="section-title" id="etapes-title" data-reveal>Commander, en trois temps</h2>
+
+      <ol class="steps">
+        <li class="step" data-reveal>
+          <span class="step-num" aria-hidden="true">1</span>
+          <h3>Décrivez votre envie</h3>
+          <p>Un gâteau de la carte ou une idée à vous : parfums, taille, décor, photo d'inspiration.</p>
+        </li>
+        <li class="step" data-reveal>
+          <span class="step-num" aria-hidden="true">2</span>
+          <h3>Recevez votre devis</h3>
+          <p>Gratuit, sous 48&nbsp;h, directement par la pâtissière. Vous confirmez, elle enfourne.</p>
+        </li>
+        <li class="step" data-reveal>
+          <span class="step-num" aria-hidden="true">3</span>
+          <h3>Régalez-vous</h3>
+          <p>Retrait à Montendre ou livraison dans un rayon de 30&nbsp;km, du gâteau d'anniversaire au buffet complet.</p>
+        </li>
+      </ol>
+
+      <div class="etapes-cta" data-reveal>
+        <a class="btn btn-primary btn-big" href="/commander/">Commander</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Sur mesure ============ -->
+  <section class="section mesure" id="sur-mesure" aria-labelledby="mesure-title">
+    <div class="wrap mesure-grid">
+      <div>
+        <h2 class="section-title" id="mesure-title" data-reveal>Une envie précise&nbsp;? Racontez-nous.</h2>
+
+        <ul class="mesure-points">
+          <li class="mesure-point" data-reveal>
+            <span class="point-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="5.4" r="1.2"/><path d="M16 10.8V7.6"/><path d="M13.5 15.2V12a1.2 1.2 0 0 1 1.2-1.2h2.6A1.2 1.2 0 0 1 18.5 12v3.2"/><path d="M10.5 20.6v-4.2a1.2 1.2 0 0 1 1.2-1.2h8.6a1.2 1.2 0 0 1 1.2 1.2v4.2"/><path d="M7 26v-4.2a1.2 1.2 0 0 1 1.2-1.2h15.6a1.2 1.2 0 0 1 1.2 1.2V26"/><path d="M4.5 26h23"/><path d="M16 26v3"/><path d="M12.5 29h7"/></svg>
+            </span>
+            <div>
+              <strong>Tout est sur mesure</strong>
+              <span>Aucun modèle imposé : vous décrivez, la pâtissière adapte.</span>
+            </div>
+          </li>
+          <li class="mesure-point" data-reveal>
+            <span class="point-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 12V4.5a1.5 1.5 0 0 1 3 0V12"/><path d="M14 12h4"/><path d="M14.8 12c-4.6 3.2-6.6 8.4-5.4 12.4 1 3.4 3.4 5.4 6.6 5.4s5.6-2 6.6-5.4c1.2-4-.8-9.2-5.4-12.4"/><path d="M15.4 12c-2.6 4.6-2.9 10-1 14.6.5 1.3 1 2.2 1.6 2.9.6-.7 1.1-1.6 1.6-2.9 1.9-4.6 1.6-10-1-14.6"/></svg>
+            </span>
+            <div>
+              <strong>Devis gratuit, réponse sous 48&nbsp;h</strong>
+              <span>Vous connaissez le prix avant de confirmer.</span>
+            </div>
+          </li>
+          <li class="mesure-point" data-reveal>
+            <span class="point-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 14.5h21V26a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 26Z"/><path d="M3.5 14.5h25"/><path d="M16 14.5v13"/><path d="M16 14.5c-1.2-3.8-4.6-4.6-5.8-2.7-1 1.6 1.6 3.1 5.8 2.7Z"/><path d="M16 14.5c1.2-3.8 4.6-4.6 5.8-2.7-1 1.6-1.6 3.1-5.8 2.7Z"/></svg>
+            </span>
+            <div>
+              <strong>Retrait ou livraison locale</strong>
+              <span>Livraison à 10&nbsp;€ dans un rayon de 30&nbsp;km autour de Montendre.</span>
+            </div>
+          </li>
+        </ul>
+
+        <div data-reveal>
+          <a class="btn btn-primary btn-big" href="/commander/">Commander</a>
+        </div>
+      </div>
+
+      <figure class="mesure-media" data-reveal>
+        <Image src={partFraisier} alt="Part de fraisier sur une assiette, fraises en rondelles et fourchette dorée" widths={[430, 860]} sizes="(max-width: 899px) 88vw, 430px" format="webp" loading="lazy" />
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ Bande finale ============ -->
+  <section class="finale" aria-labelledby="finale-title">
+    <Image class="finale-mac finale-mac-a" src={macaronA} alt="" widths={[170, 340]} sizes="170px" format="webp" loading="lazy" />
+    <Image class="finale-mac finale-mac-b" src={macaronB} alt="" widths={[150, 300]} sizes="150px" format="webp" loading="lazy" />
+    <div class="wrap finale-inner">
+      <h2 id="finale-title" data-reveal>Une occasion à fêter&nbsp;?</h2>
+      <div data-reveal>
+        <a class="btn btn-gold btn-big" href="/commander/">Commander</a>
+      </div>
+      <p class="finale-note" data-reveal>Devis gratuit · Réponse sous 48&nbsp;h</p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  /* ============ Héro — drench rouge ============ */
+  .hero {
+    --focus-ring: var(--or-vif);
+    background: var(--rouge);
+    color: var(--creme);
+    overflow: clip;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: end;
+  }
+
+  .hero-copy {
+    padding-block: clamp(3.5rem, 7vw, 6rem) clamp(3.5rem, 6vw, 5.5rem);
+  }
+
+  .hero-kicker {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0.35rem 1.1rem;
+    border: 1.5px solid rgba(246, 240, 226, 0.55);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--creme);
+    margin-bottom: 1.6rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.45rem, 1.7rem + 4.4vw, 5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--blanc);
+    margin-bottom: 1.4rem;
+    max-width: 14ch;
+  }
+
+  .hero h1 .hl {
+    color: var(--or-vif);
+    text-transform: uppercase;
+  }
+
+  .hero-sub {
+    color: var(--creme);
+    font-size: clamp(1.02rem, 0.97rem + 0.35vw, 1.2rem);
+    line-height: 1.55;
+    max-width: 54ch;
+    margin-bottom: 2rem;
+  }
+
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-bottom: 1.6rem;
+  }
+
+  .hero-note {
+    color: var(--creme);
+    font-size: 0.95rem;
+    font-weight: 500;
+    opacity: 0.92;
+  }
+
+  .hero-media {
+    position: relative;
+    align-self: end;
+    display: flex;
+    justify-content: center;
+  }
+
+  .hero-media img {
+    width: min(100%, 470px);
+    max-height: 660px;
+    object-fit: contain;
+    object-position: bottom;
+    margin-bottom: -2rem;
+    filter: drop-shadow(0 28px 36px rgba(34, 8, 13, 0.38));
+  }
+
+  /* Sticker circulaire */
+  .sticker {
+    position: absolute;
+    top: 3%;
+    left: -2%;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    width: clamp(112px, 12vw, 150px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--or-vif);
+    color: var(--nuit);
+    text-align: center;
+    transform: rotate(-10deg);
+    box-shadow: 5px 5px 0 rgba(34, 8, 13, 0.28);
+    padding: 0.9rem;
+  }
+
+  .sticker-small {
+    font-size: clamp(0.62rem, 0.6rem + 0.2vw, 0.75rem);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.25;
+  }
+
+  .sticker-star { width: 20px; height: 20px; }
+
+  .sticker-big {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.35rem, 1.1rem + 1vw, 1.7rem);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  /* Entrée du héro (décoratif, contenu visible sans JS) */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-copy > * { animation: rise 0.9s var(--ease-out) both; }
+    .hero-copy > *:nth-child(2) { animation-delay: 0.08s; }
+    .hero-copy > *:nth-child(3) { animation-delay: 0.16s; }
+    .hero-copy > *:nth-child(4) { animation-delay: 0.24s; }
+    .hero-copy > *:nth-child(5) { animation-delay: 0.32s; }
+    .hero-media { animation: rise 1s var(--ease-out) 0.15s both; }
+  }
+
+  @keyframes rise {
+    from { transform: translateY(26px); }
+    to { transform: translateY(0); }
+  }
+
+  /* ============ Marquee ============ */
+  .marquee {
+    --focus-ring: var(--or-vif);
+    position: relative;
+    z-index: 10;
+    background: var(--nuit);
+    color: var(--creme);
+    transform: rotate(-1.2deg) scale(1.04);
+    overflow: clip;
+    padding-block: 0.85rem;
+    margin-block: -1.2rem -0.6rem;
+  }
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 30s linear infinite;
+  }
+
+  .marquee-chunk {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 2.2rem;
+    padding-right: 2.2rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1rem, 0.9rem + 0.6vw, 1.3rem);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  .mq-star { color: var(--or-vif); font-size: 0.85em; }
+
+  @keyframes marquee {
+    to { transform: translateX(-50%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none !important; transform: none; }
+  }
+
+  /* ============ Fournil — grille cassée ============ */
+  .fournil { background: var(--jour); }
+
+  .specs {
+    position: relative;
+    display: grid;
+    gap: 3rem;
+  }
+
+  .spec img {
+    width: 100%;
+    filter: drop-shadow(0 22px 26px rgba(58, 35, 24, 0.16));
+  }
+
+  .spec h3 {
+    font-size: clamp(1.35rem, 1.2rem + 0.8vw, 1.7rem);
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-top: 1.4rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .spec p { color: var(--muted); }
+
+  .spec-a img { width: 88%; margin-inline: auto; }
+  .spec-b img { width: 82%; margin-inline: auto; }
+  .spec-c img { width: 74%; margin-inline: auto; }
+
+  /* Le détourage de gen-arche-evenement laisse 14,7 % de vide transparent en bas :
+     on remonte la légende à proportion (la marge en % suit la largeur de l'image) */
+  .spec-a .spec-body { margin-top: -16%; position: relative; }
+
+  .sparkle {
+    position: absolute;
+    color: var(--or-vif);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .sparkle-1 { top: -1.5rem; right: 6%; width: 34px; }
+  .sparkle-2 { bottom: 8%; left: -1rem; width: 22px; }
+
+  @media (min-width: 900px) {
+    .specs {
+      grid-template-columns: repeat(12, 1fr);
+      gap: 2rem 2.5rem;
+      align-items: start;
+    }
+
+    .spec-a { grid-column: 1 / 7; grid-row: 1; }
+    .spec-b { grid-column: 8 / 13; grid-row: 1; transform: translateY(4rem); }
+    .spec-c { grid-column: 3 / 10; grid-row: 2; margin-top: 1rem; }
+
+    .spec-c .spec-body { text-align: center; }
+    .spec-c .spec-body p { margin-inline: auto; }
+  }
+
+  /* ============ La carte ============ */
+  .carte { background: var(--jour); padding-top: 0; }
+
+  /* ============ Étapes ============ */
+  .etapes { background: var(--blanc); }
+
+  .steps {
+    display: grid;
+    gap: 2.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .step { border-top: 3px solid var(--rouge); padding-top: 1.3rem; }
+
+  .step-num {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(3.2rem, 2.6rem + 2.5vw, 4.6rem);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    color: var(--rouge);
+    margin-bottom: 0.8rem;
+  }
+
+  .step h3 {
+    font-size: 1.35rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 0.45rem;
+  }
+
+  .step p { color: var(--muted); }
+
+  .etapes-cta { text-align: center; }
+
+  @media (min-width: 800px) {
+    .steps { grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
+  }
+
+  /* ============ Sur mesure ============ */
+  .mesure { background: var(--jour); }
+
+  .mesure-grid {
+    display: grid;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .mesure-points { display: grid; gap: 1.4rem; margin-block: 1.8rem 2.2rem; }
+
+  .mesure-point { display: flex; gap: 1rem; align-items: flex-start; }
+
+  .point-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--blanc);
+    border: 1px solid var(--bord);
+    color: var(--rouge);
+  }
+
+  .point-icon svg { width: 26px; height: 26px; }
+
+  .mesure-point strong {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+
+  .mesure-point span { color: var(--muted); font-size: 0.98rem; }
+
+  .mesure-media { position: relative; text-align: center; }
+
+  .mesure-media::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -52%);
+    width: 76%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--surface-dim);
+  }
+
+  .mesure-media img {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 430px);
+    margin-inline: auto;
+    transform: rotate(2.5deg);
+    filter: drop-shadow(0 24px 28px rgba(58, 35, 24, 0.2));
+  }
+
+  @media (min-width: 900px) {
+    .mesure-grid { grid-template-columns: 1.1fr 0.9fr; gap: 4rem; }
+  }
+
+  /* ============ Bande finale : macarons flottants ============ */
+  .finale-mac {
+    position: absolute;
+    z-index: 0;
+    filter: drop-shadow(0 16px 20px rgba(0, 0, 0, 0.35));
+    pointer-events: none;
+  }
+
+  .finale-mac-a { left: -2.5rem; top: 14%; width: clamp(96px, 13vw, 170px); transform: rotate(-14deg); }
+  .finale-mac-b { right: -2rem; bottom: 8%; width: clamp(84px, 11vw, 150px); transform: rotate(12deg); }
+
+  /* ============ Responsive héro ============ */
+  @media (max-width: 899px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 0; }
+
+    .hero-copy { padding-block: 3rem 2rem; }
+    .hero h1 { max-width: none; }
+
+    .hero-media img {
+      width: min(88%, 360px);
+      margin-bottom: -1.6rem;
+    }
+
+    .sticker { left: auto; right: 4%; top: 0; }
+  }
+
+  /* Le kicker tient sur une ligne en petit mobile */
+  @media (max-width: 400px) {
+    .hero-kicker { font-size: 0.72rem; letter-spacing: 0.08em; }
+  }
+</style>

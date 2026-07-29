@@ -1,0 +1,327 @@
+---
+import { Image } from 'astro:assets';
+import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource-variable/work-sans';
+import '../styles/global.css';
+import logo from '../assets/logo.png';
+import devanture from '../assets/generated/gen-devanture.png';
+
+interface Props {
+  titre: string;
+  description: string;
+}
+const { titre, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const og = new URL('/og-image.png', Astro.site);
+---
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{titre}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="sitemap" href="/sitemap-index.xml" />
+  <meta property="og:title" content={titre} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={og} />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="fr_FR" />
+</head>
+<body>
+  <a class="evitement" href="#contenu">Aller au contenu</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="/" aria-label="Variété de Saveurs — accueil">
+        <Image src={logo} alt="" width={44} height={44} widths={[44, 88]} sizes="44px" format="webp" />
+        <span class="brand-name">Variété de Saveurs</span>
+      </a>
+
+      <!-- Le bouton précède le panneau qu'il contrôle : sinon Tab après ouverture saute
+           le menu (échec F85 du critère WCAG 2.4.3). L'ordre visuel mobile est rétabli
+           par `order` dans la media query. -->
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-panel" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav-panel" id="nav-panel" aria-label="Navigation principale">
+        <a class="nav-link" href="/carte/">La carte</a>
+        <a class="nav-link" href="/galerie/">La galerie</a>
+        <a class="nav-link" href="/#sur-mesure">Sur mesure</a>
+        <a class="nav-link" href="/contact/">Contact</a>
+      </nav>
+
+      <a class="btn btn-primary header-cta" href="/commander/">Commander</a>
+    </div>
+  </header>
+
+  <main id="contenu">
+    <slot />
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <Image class="footer-devanture" src={devanture} alt="" widths={[720, 1349]} sizes="(max-width: 760px) 92vw, 720px" format="webp" loading="lazy" />
+      <p class="footer-brand">
+        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 29.5V9.5"/><path d="M16 8.6c-1.4-2-1.4-4.2 0-6 1.4 1.8 1.4 4 0 6Z"/><path d="M16 13.2c-2.8-.4-4.7-2-5.4-4.9 2.9.4 4.8 2 5.4 4.9Z"/><path d="M16 13.2c2.8-.4 4.7-2 5.4-4.9-2.9.4-4.8 2-5.4 4.9Z"/><path d="M16 18.2c-2.8-.4-4.7-2-5.4-4.9 2.9.4 4.8 2 5.4 4.9Z"/><path d="M16 18.2c2.8-.4 4.7-2 5.4-4.9-2.9.4-4.8 2-5.4 4.9Z"/><path d="M16 23.2c-2.8-.4-4.7-2-5.4-4.9 2.9.4 4.8 2 5.4 4.9Z"/><path d="M16 23.2c2.8-.4 4.7-2 5.4-4.9-2.9.4-4.8 2-5.4 4.9Z"/></svg>
+        <span>Variété de Saveurs</span>
+      </p>
+      <p class="footer-tag">Pâtisserie artisanale, sur commande</p>
+      <p class="footer-coords">2 impasse du Printemps, 17130 Montendre · <a href="tel:+33516483243">05&nbsp;16&nbsp;48&nbsp;32&nbsp;43</a></p>
+      <nav class="footer-links" aria-label="Liens de pied de page">
+        <a href="/contact/">Contact &amp; infos pratiques</a>
+        <a href="https://www.facebook.com/p/Vari%C3%A9t%C3%A9-De-Saveurs-100094733802848/" target="_blank" rel="noopener">Facebook</a>
+        <a href="/mentions-legales/">Mentions légales</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    document.documentElement.classList.add('js');
+
+    /* Menu mobile */
+    const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
+    const panel = document.getElementById('nav-panel');
+
+    function setMenu(open: boolean) {
+      toggle?.setAttribute('aria-expanded', String(open));
+      toggle?.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu');
+      panel?.classList.toggle('open', open);
+    }
+
+    toggle?.addEventListener('click', () => {
+      setMenu(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    panel?.addEventListener('click', (event) => {
+      if ((event.target as HTMLElement).closest('a')) setMenu(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') {
+        setMenu(false);
+        toggle.focus();
+      }
+    });
+
+    /* Reveal progressif : amélioration uniquement, contenu visible par défaut */
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const items = document.querySelectorAll('[data-reveal]');
+
+    if (reduced || !('IntersectionObserver' in window)) {
+      items.forEach((el) => el.classList.add('in'));
+    } else {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+
+      items.forEach((el) => observer.observe(el));
+    }
+  </script>
+
+  <style>
+    .evitement {
+      position: absolute; left: -9999px; top: 0; z-index: 60;
+      background: var(--blanc); padding: 10px 16px;
+      border: 2px solid var(--rouge); border-radius: 999px; font-weight: 600;
+    }
+    .evitement:focus { left: 8px; top: 8px; }
+
+    /* ============ Header ============ */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--jour);
+      border-bottom: 1px solid var(--bord);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-height: 68px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      text-decoration: none;
+      margin-right: auto;
+      min-height: 48px;
+    }
+
+    .brand img { width: 44px; height: 44px; }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-weight: 750;
+      font-size: 1.2rem;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 560px) {
+      .brand-name { display: none; }
+    }
+
+    .nav-panel {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0.5rem 0.9rem;
+      font-weight: 500;
+      font-size: 0.98rem;
+      color: var(--ink);
+      text-decoration: none;
+      border-radius: 999px;
+      transition: color 0.3s var(--ease-out), background-color 0.3s var(--ease-out);
+    }
+
+    .nav-link:hover { color: var(--rouge); background: var(--filet); }
+
+    .header-cta { margin-left: 0.5rem; }
+
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .nav-toggle span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: var(--ink);
+      border-radius: 2px;
+      transition: transform 0.35s var(--ease-out), opacity 0.35s var(--ease-out);
+    }
+
+    .nav-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    @media (max-width: 860px) {
+      /* Visuellement le bouton reste à droite du CTA, même s'il le précède dans le DOM */
+      .nav-toggle { display: flex; order: 3; }
+      .header-cta { margin-left: auto; order: 2; }
+
+      .nav-panel {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        background: var(--jour);
+        border-bottom: 1px solid var(--bord);
+        padding: 0.5rem 1.25rem 1rem;
+      }
+
+      .nav-panel.open { display: flex; }
+
+      .nav-link {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+        padding: 0.85rem 0.5rem;
+        border-radius: 0;
+        border-bottom: 1px solid var(--filet);
+      }
+
+      .nav-link:last-child { border-bottom: 0; }
+      .nav-link:hover { background: transparent; color: var(--rouge); }
+    }
+
+    /* ============ Footer ============ */
+    .site-footer {
+      --focus-ring: var(--or-vif);
+      background: var(--nuit-fond);
+      color: var(--creme);
+      padding-block: 3rem 3.5rem;
+      text-align: center;
+    }
+
+    .footer-devanture {
+      width: min(720px, 92%);
+      margin: 0 auto 2rem;
+      opacity: 0.85;
+    }
+
+    .footer-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--or-vif);
+      margin-bottom: 0.4rem;
+    }
+
+    .footer-brand svg { width: 28px; height: 28px; }
+
+    .footer-brand span {
+      font-family: var(--font-display);
+      font-weight: 750;
+      font-size: 1.3rem;
+      letter-spacing: -0.015em;
+      color: var(--creme);
+    }
+
+    .footer-tag { color: var(--rose); font-size: 0.95rem; margin-bottom: 0.3rem; margin-inline: auto; }
+
+    .footer-coords { color: var(--rose); font-size: 0.85rem; opacity: 0.8; margin-bottom: 1.6rem; margin-inline: auto; }
+
+    .footer-coords a { color: inherit; }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.25rem 1.5rem;
+    }
+
+    .footer-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0.4rem 0.4rem;
+      color: var(--creme);
+      font-weight: 500;
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: color 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+    }
+
+    .footer-links a:hover { color: var(--or-vif); border-bottom-color: var(--or-vif); }
+  </style>
+</body>
+</html>

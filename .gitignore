@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.astro/
+.wrangler/
+
+# Docs de travail et matériel d'atelier : restent en local, hors du dépôt public.
+# ARCHI / DESIGN / PRODUCT portent des coordonnées privées de la gérante.
+ARCHI.md
+DESIGN.md
+PRODUCT.md
+PROMPT*.md
+maquettes/
+mockup*.html
+.impeccable/

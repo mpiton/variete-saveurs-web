@@ -1,0 +1,48 @@
+# Carte de Variété de Saveurs — vocabulaire du Catalogue (../CONTEXT.md)
+# Prix réels relevés sur les cartes publiées sur la page Facebook (2026-07).
+# prix : « 5 € » affiché tel quel, « sur devis » (pastille) ; unite : complément affiché sous le nom.
+# Les noms contenant des virgules sont entre guillemets (syntaxe flow YAML).
+groupes:
+  - nom: Gâteaux
+    produits:
+      - { nom: Fraisier, prix: "5 €", unite: "la part" }
+      - { nom: Aux fruits (selon la saison), prix: "5 €", unite: "la part" }
+      - { nom: Kinder bueno, prix: "5 €", unite: "la part" }
+      - { nom: Oreo, prix: "5 €", unite: "la part" }
+      - { nom: Tiramisu, prix: "5 €", unite: "la part" }
+      - { nom: Entremet exotique, prix: "5 €", unite: "la part" }
+      - { nom: Entremet 3 chocolats, prix: "5 €", unite: "la part" }
+      - { nom: Forêt noire, prix: "5 €", unite: "la part" }
+      - { nom: Number cake (personnalisé), prix: "5 €", unite: "la part" }
+      - { nom: Chocolat cacao / vanille, prix: "5 €", unite: "la part" }
+      - { nom: Tout chocolat blanc, prix: "6 €", unite: "la part" }
+      - { nom: Tout chocolat fondant, prix: "6 €", unite: "la part" }
+      - { nom: Red velvet, prix: "6 €", unite: "la part" }
+  - nom: Buffet sucré
+    produits:
+      - { nom: "Mini choux (vanille, chocolat, café, spéculoos)", prix: "0,80 €", unite: "la pièce" }
+      - { nom: "Mini éclairs (vanille, chocolat, café, spéculoos)", prix: "0,80 €", unite: "la pièce" }
+      - { nom: "Mini tartelettes (fruit, chocolat, kinder, spéculoos)", prix: "0,85 €", unite: "la pièce" }
+      - { nom: "Mini entremets (fruit, chocolat)", prix: "0,85 €", unite: "la pièce" }
+      - { nom: "Mini muffins (fruit, chocolat)", prix: "0,85 €", unite: "la pièce" }
+      - { nom: "Mini verrines (fruit, chocolat, tiramisu, spéculoos)", prix: "0,85 €", unite: "la pièce" }
+      - { nom: "Mini macarons (fruit, chocolat)", prix: "0,85 €", unite: "la pièce" }
+  - nom: Buffet salé
+    produits:
+      - { nom: Mini burgers, prix: "0,85 €", unite: "la pièce" }
+      - { nom: Mini pizzas, prix: "0,85 €", unite: "la pièce" }
+      - { nom: "Mini feuilletés (thon, poulet, saucisse, viande)", prix: "0,85 €", unite: "la pièce" }
+      - { nom: Canapés au jambon, prix: "0,70 €", unite: "la pièce" }
+      - { nom: "Nems (poulet, thon, viande)", prix: "0,80 €", unite: "la pièce" }
+      - { nom: "Samoussas (poulet, viande)", prix: "0,80 €", unite: "la pièce" }
+      - { nom: "Wraps (poulet, viande)", prix: "0,80 €", unite: "la pièce" }
+      - { nom: "Mini quiches (jambon, poulet, fromage)", prix: "0,80 €", unite: "la pièce" }
+  - nom: Petites pâtisseries
+    produits:
+      - { nom: Cupcakes fourrés, prix: "2,50 €", unite: "la pièce" }
+      - { nom: Magnum cake, prix: "2,50 €", unite: "la pièce" }
+      - { nom: Cake pops, prix: "1,25 €", unite: "la pièce" }
+  - nom: Pièces d'événement
+    produits:
+      - { nom: Gâteau à étages, prix: "sur devis" }
+      - { nom: Pièce montée, prix: "sur devis" }

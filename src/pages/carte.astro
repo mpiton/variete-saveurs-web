@@ -1,0 +1,78 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { parse } from 'yaml';
+import carteRaw from '../data/carte.yaml?raw';
+
+type Produit = { nom: string; prix: string; unite?: string };
+type Groupe = { nom: string; produits: Produit[] };
+const carte = parse(carteRaw) as { groupes: Groupe[] };
+
+// « 28 € » → montant seul ; « à partir de 60 € » → préfixe en petit ; « sur devis » → pastille
+function decouperPrix(prix: string): { tag: boolean; prefixe?: string; montant: string } {
+  if (prix.toLowerCase() === 'sur devis') return { tag: true, montant: prix };
+  const m = prix.match(/^(à partir de)\s+(.+)$/i);
+  if (m) return { tag: false, prefixe: m[1], montant: m[2]! };
+  return { tag: false, montant: prix };
+}
+---
+<Layout
+  titre="La carte — Variété de Saveurs"
+  description="Entremets, macarons, douceurs et pièces d'événement : la carte et les prix de la pâtisserie Variété de Saveurs. Chaque ligne se commande en ligne."
+>
+  <section class="section carte-page" aria-labelledby="carte-title">
+    <div class="wrap">
+      <h1 class="section-title" id="carte-title" data-reveal>La carte</h1>
+      <p class="section-intro" data-reveal>
+        Chaque ligne se commande : le bouton pré-remplit votre demande.
+        Une envie hors carte&nbsp;? Tout se fait aussi <a href="/commander/">sur mesure</a>.
+      </p>
+
+      <div class="carte-panel" data-reveal>
+        {carte.groupes.map((groupe) => (
+          <div class="carte-group">
+            <h2>{groupe.nom}</h2>
+            <ul>
+              {groupe.produits.map((p) => {
+                const prix = decouperPrix(p.prix);
+                return (
+                  <li class="carte-row">
+                    <div class="row-main">
+                      <span class="row-name">{p.nom}</span>
+                      {p.unite && <span class="row-meta">{p.unite}</span>}
+                    </div>
+                    <span class="row-price">
+                      {prix.tag
+                        ? <span class="tag-devis">sur devis</span>
+                        : prix.prefixe
+                          ? <Fragment><small>{prix.prefixe}</small>{prix.montant}</Fragment>
+                          : prix.montant}
+                    </span>
+                    <a class="row-cta" href={`/commander/?produit=${encodeURIComponent(p.nom)}`} aria-label={`Commander : ${p.nom}`}>Commander</a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <p class="note" data-reveal>Prix indicatifs, à la part pour les gâteaux, à la pièce pour le reste. Chaque commande passe par un devis gratuit.
+      Gâteaux : forme au choix (rond, carré, rectangle, cœur). Buffets : à partir de 15 pièces, 4 saveurs minimum.</p>
+    </div>
+  </section>
+
+  <section class="finale" aria-labelledby="finale-title">
+    <div class="wrap finale-inner">
+      <h2 id="finale-title" data-reveal>Rien ne vous tente tel quel&nbsp;?</h2>
+      <div data-reveal>
+        <a class="btn btn-gold btn-big" href="/commander/">Décrire mon envie</a>
+      </div>
+      <p class="finale-note" data-reveal>Devis gratuit · Réponse sous 48&nbsp;h</p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .carte-page { padding-block: clamp(3rem, 6vw, 4.5rem) var(--section-pad); }
+  .note { text-align: center; margin-top: 1.6rem; color: var(--muted); font-size: 0.875rem; }
+</style>

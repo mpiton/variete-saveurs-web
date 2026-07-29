@@ -86,9 +86,11 @@ const sitekeyTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY;
             {/* Le script pose lui-même l'input caché `cf-turnstile-response` dans ce
                 formulaire ; `new FormData(form)` le récupère sans code supplémentaire.
                 refresh-expired="auto" : le jeton meurt au bout de 5 min, or rédiger une
-                demande et joindre des photos prend souvent plus longtemps. */}
+                demande et joindre des photos prend souvent plus longtemps.
+                theme="light" : par défaut le widget suit le thème du système et vire au
+                gris sombre, sur une page qui reste crème en toute circonstance. */}
             <div class="cf-turnstile" data-sitekey={sitekeyTurnstile}
-                 data-language="fr" data-refresh-expired="auto"></div>
+                 data-language="fr" data-refresh-expired="auto" data-theme="light"></div>
             <script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
           </>
         )}

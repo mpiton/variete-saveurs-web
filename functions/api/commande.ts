@@ -1,19 +1,14 @@
 // Fonction Cloudflare Pages : POST /api/commande
 // Valide la demande, transforme en email Brevo vers l'adresse pro. Aucun stockage (ADR 0002).
 
+import { champsManquants, echapper, photosRetenues } from '../../src/lib/commande';
+
 interface Env {
   BREVO_API_KEY: string;      // secret Worker — jamais dans le repo
   ORDER_EMAIL: string;        // adresse pro destinataire
   SENDER_EMAIL: string;       // expéditeur vérifié Brevo (SPF/DKIM)
   TURNSTILE_SECRET?: string;  // optionnel : active la vérification Turnstile si présent
 }
-
-const MAX_PHOTOS = 3;
-const MAX_PHOTO_OCTETS = 3 * 1024 * 1024;   // marge au-dessus de la compression client (~2 Mo)
-const MAX_TOTAL_OCTETS = 8 * 1024 * 1024;   // sous la limite Brevo (~10 Mo)
-
-const echapper = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 export const onRequestPost = async (context: { request: Request; env: Env }): Promise<Response> => {
   const { request, env } = context;
@@ -52,30 +47,16 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   const email = champ('email');
   const facebook = champ('facebook');
 
-  const manquants: string[] = [];
-  if (!description) manquants.push('description');
-  // Le round-trip ISO rejette le mauvais format ET les dates impossibles (2026-02-31, 2026-13-40).
-  // Le client pose date.min=demain ; un POST direct ne passe pas par le formulaire.
-  const jour = new Date(`${date}T12:00:00Z`);
-  const demain = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
-  if (Number.isNaN(jour.getTime()) || !jour.toISOString().startsWith(date) || date < demain) manquants.push('date');
-  if (remise !== 'retrait' && remise !== 'livraison') manquants.push('remise');
-  if (remise === 'livraison' && !adresse) manquants.push('adresse');
-  if (!prenom) manquants.push('prenom');
-  if (!nom) manquants.push('nom');
-  if (!telephone) manquants.push('telephone');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) manquants.push('email');
+  const manquants = champsManquants(
+    { description, date, remise, adresse, prenom, nom, telephone, email },
+    Date.now(),
+  );
   if (manquants.length) return Response.json({ ok: false, erreur: 'champs', manquants }, { status: 400 });
 
   // Photos → pièces jointes base64
+  const fichiers = donnees.getAll('photos').filter((e): e is File => e instanceof File);
   const attachments: { name: string; content: string }[] = [];
-  let total = 0;
-  for (const entree of donnees.getAll('photos')) {
-    if (!(entree instanceof File) || attachments.length >= MAX_PHOTOS) continue;
-    if (!entree.type.startsWith('image/')) continue;   // le client filtre déjà, un POST direct non
-    if (entree.size === 0 || entree.size > MAX_PHOTO_OCTETS) continue;
-    total += entree.size;
-    if (total > MAX_TOTAL_OCTETS) break;
+  for (const entree of photosRetenues(fichiers)) {
     const octets = new Uint8Array(await entree.arrayBuffer());
     let bin = '';
     for (let i = 0; i < octets.length; i += 0x8000) {

@@ -1,0 +1,37 @@
+---
+// Un groupe de la carte. La home le rend sous h3 (sous « La carte » en h2),
+// la page carte sous h2 (sous le h1 de page).
+import { decouperPrix, type Groupe } from '../lib/carte';
+
+interface Props {
+  groupe: Groupe;
+  niveau?: 'h2' | 'h3';
+}
+
+const { groupe, niveau = 'h2' } = Astro.props;
+const Titre = niveau;
+---
+<div class="carte-group">
+  <Titre>{groupe.nom}</Titre>
+  <ul>
+    {groupe.produits.map((p) => {
+      const prix = decouperPrix(p.prix);
+      return (
+        <li class="carte-row">
+          <div class="row-main">
+            <span class="row-name">{p.nom}</span>
+            {p.unite && <span class="row-meta">{p.unite}</span>}
+          </div>
+          <span class="row-price">
+            {prix.tag
+              ? <span class="tag-devis">sur devis</span>
+              : prix.prefixe
+                ? <Fragment><small>{prix.prefixe}</small>{prix.montant}</Fragment>
+                : prix.montant}
+          </span>
+          <a class="row-cta" href={`/commander/?produit=${encodeURIComponent(p.nom)}`} aria-label={`Commander : ${p.nom}`}>Commander</a>
+        </li>
+      );
+    })}
+  </ul>
+</div>

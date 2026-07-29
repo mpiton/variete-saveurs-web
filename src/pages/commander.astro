@@ -1,0 +1,308 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout
+  titre="Commander — Variété de Saveurs"
+  description="Passez votre demande de commande : décrivez votre envie, joignez une photo d'inspiration, choisissez retrait ou livraison. Devis gratuit, réponse sous 48 h."
+>
+  <section class="section commander" aria-labelledby="titre-commander">
+    <div class="wrap">
+      <h1 id="titre-commander" class="section-title">Commander</h1>
+      <p class="section-intro">
+        Décrivez votre envie : un classique de la carte, une pièce sur mesure, ou les deux.
+        La pâtissière vous répond avec un devis.
+      </p>
+      <p class="promesses" aria-label="Nos engagements">
+        <span>Devis gratuit</span><span aria-hidden="true">·</span>
+        <span>Réponse sous 48&nbsp;h</span><span aria-hidden="true">·</span>
+        <span>Retrait ou livraison locale</span>
+      </p>
+
+      <form id="form-commande" method="post" action="/api/commande" enctype="multipart/form-data" novalidate>
+        <label class="champ">
+          <span>Votre demande *</span>
+          <textarea name="description" rows="5" required
+            placeholder="Ex. : un fraisier pour 8 personnes samedi, ou un gâteau à étages sur le thème de la forêt…"></textarea>
+        </label>
+
+        <label class="champ">
+          <span>Pour quelle date&nbsp;? *</span>
+          <input type="date" name="date" required />
+        </label>
+
+        <fieldset class="champ remise">
+          <legend>Remise de la commande *</legend>
+          <label><input type="radio" name="remise" value="retrait" checked /> Retrait sur place</label>
+          <label><input type="radio" name="remise" value="livraison" /> Livraison locale</label>
+        </fieldset>
+
+        <label class="champ" id="champ-adresse" hidden>
+          <span>Adresse de livraison *</span>
+          <textarea name="adresse" rows="2" placeholder="Adresse complète"></textarea>
+        </label>
+
+        <div class="champ">
+          <span id="label-photos">Photos d'inspiration (3 max, optionnel)</span>
+          <button type="button" class="dropzone" id="dropzone" aria-describedby="label-photos">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 15.2V12a1.2 1.2 0 0 1 1.2-1.2h2.6A1.2 1.2 0 0 1 18.5 12v3.2"/><path d="M10.5 20.6v-4.2a1.2 1.2 0 0 1 1.2-1.2h8.6a1.2 1.2 0 0 1 1.2 1.2v4.2"/><path d="M7 26v-4.2a1.2 1.2 0 0 1 1.2-1.2h15.6a1.2 1.2 0 0 1 1.2 1.2V26"/><path d="M4.5 26h23"/><path d="M16 26v3"/><path d="M12.5 29h7"/><circle cx="16" cy="5.4" r="1.2"/><path d="M16 10.8V7.6"/></svg>
+            Déposez vos photos ici ou cliquez pour choisir
+          </button>
+          <input type="file" id="photos" accept="image/*" multiple hidden />
+          <div class="apercus" id="apercus"></div>
+        </div>
+
+        <div class="duo">
+          <label class="champ"><span>Prénom *</span><input type="text" name="prenom" autocomplete="given-name" required /></label>
+          <label class="champ"><span>Nom *</span><input type="text" name="nom" autocomplete="family-name" required /></label>
+        </div>
+        <div class="duo">
+          <label class="champ"><span>Téléphone *</span><input type="tel" name="telephone" autocomplete="tel" required /></label>
+          <label class="champ"><span>Email *</span><input type="email" name="email" autocomplete="email" required /></label>
+        </div>
+        <label class="champ">
+          <span>Votre profil Facebook (optionnel)</span>
+          <input type="text" name="facebook" autocomplete="off" placeholder="Nom ou lien de votre profil, si vous préférez être recontacté·e par Messenger" />
+        </label>
+
+        <p class="piege" aria-hidden="true"><label>Votre site web <input type="text" name="site" tabindex="-1" autocomplete="off" /></label></p>
+
+        <!-- Si TURNSTILE_SECRET est activé côté Worker, insérer ici le widget :
+             <div class="cf-turnstile" data-sitekey="…"></div> + le script Cloudflare Turnstile.
+             Sans widget côté client, le Worker rejettera toutes les demandes. -->
+
+
+        <p class="message-erreur" id="erreur-globale" role="alert" tabindex="-1" hidden></p>
+        <button class="btn btn-primary btn-big envoi" type="submit" id="bouton-envoi">Envoyer ma demande</button>
+        <p class="rgpd">Vos coordonnées ne servent qu'à répondre à votre demande.</p>
+      </form>
+
+      <div id="confirmation" hidden>
+        <h2 id="titre-confirmation" tabindex="-1">Demande envoyée&nbsp;!</h2>
+        <p>Merci, votre demande est bien arrivée chez la pâtissière. Elle vous répond sous 48&nbsp;h avec un devis,
+        par email ou par téléphone.</p>
+        <a class="btn btn-outline-red" href="/">Retour à l'accueil</a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .commander { padding-block: clamp(3rem, 6vw, 4.5rem) var(--section-pad); }
+  .promesses {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: -1.5rem; margin-bottom: 2.5rem;
+    color: var(--muted); font-weight: 600; font-size: 0.95rem;
+  }
+  form, #confirmation { max-width: 640px; }
+  .remise { border: none; padding: 0; }
+  .remise legend { font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; padding: 0; }
+  .remise label { display: inline-flex; align-items: center; gap: 8px; margin-right: 20px; min-height: 44px; }
+  .remise input { accent-color: var(--rouge); width: 18px; height: 18px; }
+  .duo { display: grid; gap: 0 16px; }
+  @media (min-width: 560px) { .duo { grid-template-columns: 1fr 1fr; } }
+
+  .dropzone {
+    display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;
+    padding: 26px 16px; background: var(--blanc); color: var(--muted);
+    border: 2px dashed var(--bord); border-radius: 12px;
+    font: 400 0.95rem var(--font-body); cursor: pointer;
+  }
+  .dropzone:hover, .dropzone.survol { border-color: var(--or); color: var(--ink); }
+  .dropzone svg { width: 32px; height: 32px; color: var(--or); }
+  .apercus { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .apercus figure { position: relative; }
+  .apercus img { width: 84px; height: 84px; object-fit: cover; border-radius: 6px; border: 1px solid var(--bord); }
+  .apercus button {
+    position: absolute; top: -8px; right: -8px; width: 24px; height: 24px;
+    border-radius: 999px; border: 1px solid var(--bord); background: var(--blanc);
+    color: var(--rouge); font-weight: 700; cursor: pointer; line-height: 1;
+  }
+  .piege { position: absolute; left: -9999px; }
+  .envoi { margin-top: 26px; }
+  @media (max-width: 640px) { .envoi { width: 100%; } }
+  .rgpd { margin-top: 12px; color: var(--muted); font-size: 0.875rem; }
+  #confirmation { text-align: center; margin-inline: auto; }
+  #confirmation h2 {
+    font-family: var(--font-display); font-weight: 800; letter-spacing: -0.025em;
+    font-size: clamp(2rem, 1.45rem + 2.6vw, 3.5rem); color: var(--rouge);
+  }
+  #confirmation p { margin: 16px auto 24px; max-width: 46ch; color: var(--muted); }
+</style>
+
+<script>
+  const form = document.getElementById('form-commande') as HTMLFormElement;
+  const confirmation = document.getElementById('confirmation') as HTMLElement;
+  const erreurGlobale = document.getElementById('erreur-globale') as HTMLElement;
+  const boutonEnvoi = document.getElementById('bouton-envoi') as HTMLButtonElement;
+  const champAdresse = document.getElementById('champ-adresse') as HTMLElement;
+  const adresse = form.elements.namedItem('adresse') as HTMLTextAreaElement;
+  const description = form.elements.namedItem('description') as HTMLTextAreaElement;
+  const date = form.elements.namedItem('date') as HTMLInputElement;
+
+  // Pré-remplissage depuis la carte (?produit=)
+  const produit = new URLSearchParams(location.search).get('produit');
+  if (produit && !description.value) description.value = `Je souhaite commander : ${produit}\n`;
+
+  // Date minimum : demain
+  const demain = new Date(Date.now() + 86400000);
+  date.min = demain.toISOString().slice(0, 10);
+
+  // Adresse conditionnelle
+  form.querySelectorAll<HTMLInputElement>('input[name="remise"]').forEach((r) =>
+    r.addEventListener('change', () => {
+      const livraison = (form.elements.namedItem('remise') as RadioNodeList).value === 'livraison';
+      champAdresse.hidden = !livraison;
+      adresse.required = livraison;
+    })
+  );
+
+  // Photos : dropzone + compression client (canvas, JPEG, max 1600px)
+  const MAX_PHOTOS = 3;
+  const dropzone = document.getElementById('dropzone') as HTMLButtonElement;
+  const inputPhotos = document.getElementById('photos') as HTMLInputElement;
+  const apercus = document.getElementById('apercus') as HTMLElement;
+  let photos: { blob: Blob; nom: string }[] = [];
+
+  async function compresser(fichier: File): Promise<Blob> {
+    const bitmap = await createImageBitmap(fichier);
+    const echelle = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * echelle);
+    canvas.height = Math.round(bitmap.height * echelle);
+    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return new Promise((res, rej) =>
+      canvas.toBlob((b) => (b ? res(b) : rej(new Error('compression'))), 'image/jpeg', 0.82)
+    );
+  }
+
+  function rendreApercus() {
+    apercus.innerHTML = '';
+    photos.forEach((p, i) => {
+      const fig = document.createElement('figure');
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(p.blob);
+      img.alt = p.nom;
+      const sup = document.createElement('button');
+      sup.type = 'button';
+      sup.textContent = '×';
+      sup.setAttribute('aria-label', `Retirer ${p.nom}`);
+      sup.addEventListener('click', () => { photos.splice(i, 1); rendreApercus(); });
+      fig.append(img, sup);
+      apercus.append(fig);
+    });
+  }
+
+  async function ajouterFichiers(fichiers: FileList | File[]) {
+    for (const f of Array.from(fichiers)) {
+      if (photos.length >= MAX_PHOTOS) break;
+      if (!f.type.startsWith('image/')) continue;
+      try {
+        photos.push({ blob: await compresser(f), nom: f.name });
+      } catch { /* fichier illisible : ignoré */ }
+    }
+    rendreApercus();
+  }
+
+  dropzone.addEventListener('click', () => inputPhotos.click());
+  inputPhotos.addEventListener('change', () => { if (inputPhotos.files) ajouterFichiers(inputPhotos.files); inputPhotos.value = ''; });
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('survol'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('survol'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('survol');
+    if (e.dataTransfer?.files) ajouterFichiers(e.dataTransfer.files);
+  });
+
+  // Messages en français : validationMessage suit la langue du navigateur, pas celle du site.
+  // Clé '' = repli quand le champ n'a pas de message dédié.
+  const MESSAGES: Record<string, Record<string, string>> = {
+    valueMissing: {
+      description: 'Décrivez ce que vous souhaitez commander.',
+      date: 'Indiquez la date à laquelle vous voulez votre commande.',
+      adresse: "Indiquez l'adresse de livraison.",
+      prenom: 'Indiquez votre prénom.',
+      nom: 'Indiquez votre nom.',
+      telephone: 'Indiquez un téléphone où la pâtissière peut vous joindre.',
+      email: 'Indiquez votre email.',
+      '': 'Ce champ est nécessaire.',
+    },
+    typeMismatch: {
+      email: 'Cette adresse email semble incomplète.',
+      '': "Le format attendu n'est pas respecté.",
+    },
+    rangeUnderflow: {
+      date: 'Choisissez une date à partir de demain.',
+      '': 'La valeur est trop basse.',
+    },
+    badInput: {
+      date: "Cette date n'est pas valide.",
+      '': "La saisie n'est pas valide.",
+    },
+  };
+
+  function messageFr(el: HTMLInputElement | HTMLTextAreaElement): string {
+    const flag = Object.keys(MESSAGES).find((f) => el.validity[f as keyof ValidityState]);
+    const par = flag ? MESSAGES[flag]! : null;
+    return par ? (par[el.name] ?? par['']!) : 'Vérifiez ce champ.';
+  }
+
+  // Erreurs inline brandées (remplace les bulles natives du navigateur)
+  function afficherErreurs() {
+    form.querySelectorAll('.message-erreur[data-auto]').forEach((m) => m.remove());
+    form.querySelectorAll('.champ-erreur').forEach((c) => {
+      c.classList.remove('champ-erreur');
+      c.removeAttribute('aria-invalid');
+    });
+    const invalides = Array.from(form.elements).filter(
+      (el): el is HTMLInputElement | HTMLTextAreaElement =>
+        (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) &&
+        el.willValidate && !el.checkValidity()
+    );
+    for (const el of invalides) {
+      el.classList.add('champ-erreur');
+      el.setAttribute('aria-invalid', 'true');
+      const msg = document.createElement('p');
+      msg.className = 'message-erreur';
+      msg.dataset.auto = '';
+      msg.id = `erreur-${el.name || el.id}`;
+      msg.textContent = messageFr(el);
+      el.setAttribute('aria-describedby', msg.id);
+      el.closest('.champ')?.append(msg);
+      el.addEventListener('input', () => {
+        el.classList.remove('champ-erreur');
+        el.removeAttribute('aria-invalid');
+        el.removeAttribute('aria-describedby');
+        msg.remove();
+      }, { once: true });
+    }
+    invalides[0]?.focus();
+  }
+
+  // Envoi
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    erreurGlobale.hidden = true;
+    if (!form.checkValidity()) { afficherErreurs(); return; }
+
+    const donnees = new FormData(form);
+    photos.forEach((p, i) => donnees.append('photos', new File([p.blob], `photo-${i + 1}.jpg`, { type: 'image/jpeg' })));
+
+    boutonEnvoi.disabled = true;
+    boutonEnvoi.textContent = 'Envoi en cours…';
+    try {
+      const rep = await fetch('/api/commande', { method: 'POST', body: donnees });
+      if (!rep.ok) throw new Error(String(rep.status));
+      form.hidden = true;
+      confirmation.hidden = false;
+      confirmation.scrollIntoView({ block: 'center' });
+      document.getElementById('titre-confirmation')?.focus();
+    } catch {
+      erreurGlobale.innerHTML =
+        "L'envoi a échoué. Réessayez dans un instant, ou <a href=\"/contact/\">contactez-nous directement</a> : téléphone et Facebook sont sur la page contact.";
+      erreurGlobale.hidden = false;
+      erreurGlobale.focus();
+      boutonEnvoi.disabled = false;
+      boutonEnvoi.textContent = 'Envoyer ma demande';
+    }
+  });
+</script>

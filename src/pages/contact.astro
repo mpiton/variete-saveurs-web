@@ -1,0 +1,55 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout
+  titre="Contact & infos pratiques — Variété de Saveurs"
+  description="Comment commander, retrait et livraison locale, horaires et coordonnées de la pâtisserie Variété de Saveurs."
+>
+  <section class="section contact" aria-labelledby="titre-infos">
+    <div class="wrap">
+      <h1 id="titre-infos" class="section-title" data-reveal>Contact &amp; infos pratiques</h1>
+      <div class="infos-grid">
+        <div data-reveal>
+          <h2>Commander</h2>
+          <p>Par le <a href="/commander/">formulaire du site</a>, par téléphone ou via notre page Facebook.
+          Pensez à commander quelques jours à l'avance pour les pièces d'événement.</p>
+        </div>
+        <div data-reveal>
+          <h2>Retrait &amp; livraison</h2>
+          <p>Retrait sur place : 2 impasse du Printemps, 17130 Montendre,<br />
+          du lundi au samedi, 14&nbsp;h&nbsp;30 – 18&nbsp;h (fermé le dimanche).<br />
+          Livraison (+10&nbsp;€) dans un rayon de 30&nbsp;km autour de Montendre. Au-delà, c'est possible avec une majoration, on en convient ensemble.</p>
+        </div>
+        <div data-reveal>
+          <h2>Nous joindre</h2>
+          <p>
+            <a href="tel:+33516483243">05&nbsp;16&nbsp;48&nbsp;32&nbsp;43</a><br />
+            <a href="mailto:contact@variete-de-saveurs.fr">contact@variete-de-saveurs.fr</a><br />
+            <a href="https://www.facebook.com/p/Vari%C3%A9t%C3%A9-De-Saveurs-100094733802848/" target="_blank" rel="noopener">Page Facebook</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="finale" aria-labelledby="finale-title">
+    <div class="wrap finale-inner">
+      <h2 id="finale-title" data-reveal>Une occasion à fêter&nbsp;?</h2>
+      <div data-reveal>
+        <a class="btn btn-gold btn-big" href="/commander/">Commander</a>
+      </div>
+      <p class="finale-note" data-reveal>Devis gratuit · Réponse sous 48&nbsp;h</p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .contact { padding-block: clamp(3rem, 6vw, 4.5rem) var(--section-pad); }
+  .infos-grid { display: grid; gap: clamp(2rem, 4vw, 3.5rem); }
+  @media (min-width: 760px) { .infos-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  .infos-grid h2 {
+    font-size: 1.35rem; font-weight: 750; letter-spacing: -0.02em;
+    color: var(--rouge); margin-bottom: 0.6rem;
+  }
+  .infos-grid p { color: var(--muted); }
+</style>

@@ -40,8 +40,13 @@ const og = new URL('/og-image.png', Astro.site);
 
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="/">
-        <Image src={logo} alt="Variété de Saveurs" width={44} height={44} widths={[44, 88]} sizes="44px" format="webp" loading="eager" />
+      {/* aria-label sur le lien + alt="" sur le logo : `.brand-name` est masqué sous
+          560px, donc sans aria-label le lien n'aurait aucun nom accessible sur mobile.
+          Décrire le logo en plus dupliquerait le nom sur desktop. L'audit compte cet
+          alt vide comme manquant, à tort : l'image est redondante avec le lien.
+          loading="eager" en revanche est justifié, le header est sticky. */}
+      <a class="brand" href="/" aria-label="Variété de Saveurs — accueil">
+        <Image src={logo} alt="" width={44} height={44} widths={[44, 88]} sizes="44px" format="webp" loading="eager" />
         <span class="brand-name">Variété de Saveurs</span>
       </a>
 

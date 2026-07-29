@@ -92,8 +92,10 @@ const localBusiness = {
         <svg class="sparkle sparkle-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.7 5.3 2.7 7.3 8 8-5.3.7-7.3 2.7-8 8-.7-5.3-2.7-7.3-8-8 5.3-.7 7.3-2.7 8-8z" fill="currentColor"/></svg>
 
         <article class="spec spec-a" data-reveal>
-          {/* eager : première carte après le héro, déjà dans le viewport sur mobile. */}
-          <Image src={archeEvenement} alt="Gâteau de mariage à deux étages couronné de roses, sur un présentoir" widths={[520, 1024]} sizes="(max-width: 899px) 88vw, 520px" format="webp" loading="eager" />
+          {/* lazy : la carte suit le héro complet et le marquee, donc pas dans le viewport
+              initial sur mobile. En eager elle concurrencerait l'image du héro, qui est le
+              LCP et porte fetchpriority="high". L'audit la signale « above-fold », à tort. */}
+          <Image src={archeEvenement} alt="Gâteau de mariage à deux étages couronné de roses, sur un présentoir" widths={[520, 1024]} sizes="(max-width: 899px) 88vw, 520px" format="webp" loading="lazy" />
           <div class="spec-body">
             <h3>Gâteaux d'événement</h3>
             <p>Mariages, anniversaires, baptêmes&nbsp;: des pièces montées à votre image.</p>
@@ -213,8 +215,11 @@ const localBusiness = {
 
   <!-- ============ Bande finale ============ -->
   <section class="finale" aria-labelledby="finale-title">
-    <Image class="finale-mac finale-mac-a" src={macaronA} alt="Macaron à coque crème poudrée d'or, ganache visible, vu de trois quarts" widths={[170, 340]} sizes="170px" format="webp" loading="lazy" />
-    <Image class="finale-mac finale-mac-b" src={macaronB} alt="Macaron à coque vert pistache, garni d'une crème claire" widths={[150, 300]} sizes="150px" format="webp" loading="lazy" />
+    {/* alt="" volontaire : ornements décoratifs en position absolue, pointer-events:none.
+        L'audit les compte comme « alt manquant », mais les décrire ferait annoncer du
+        bruit aux lecteurs d'écran sur une bande d'appel à l'action. */}
+    <Image class="finale-mac finale-mac-a" src={macaronA} alt="" widths={[170, 340]} sizes="170px" format="webp" loading="lazy" />
+    <Image class="finale-mac finale-mac-b" src={macaronB} alt="" widths={[150, 300]} sizes="150px" format="webp" loading="lazy" />
     <div class="wrap finale-inner">
       <h2 id="finale-title" data-reveal>Une occasion à fêter&nbsp;?</h2>
       <div data-reveal>

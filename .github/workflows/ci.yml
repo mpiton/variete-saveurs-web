@@ -1,0 +1,40 @@
+name: CI
+
+# Le déploiement n'est pas ici : l'intégration Git de Cloudflare Pages builde et
+# publie main toute seule, et fabrique une preview par branche. Ce workflow ne
+# fait que vérifier, pour qu'une PR rouge se voie avant le merge.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'      # même version que NODE_VERSION sur Cloudflare Pages
+          cache: npm
+
+      - run: npm ci
+
+      - name: Types et diagnostics Astro
+        run: npm run check       # astro build ne lance pas astro check : une erreur de types passerait sinon
+
+      - name: Tests
+        run: npm test
+
+      - name: Build du site
+        run: npm run build
+
+      - name: Build des Pages Functions
+        run: npx wrangler pages functions build --outdir=/tmp/functions-build
+        # Le build Astro ignore functions/. Sans cette étape, un Worker cassé
+        # ne se verrait qu'au déploiement.

@@ -8,7 +8,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -28,6 +30,8 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.115.0",
     "yaml": "^2.9.0"
   },
   "private": "true"

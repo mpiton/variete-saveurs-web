@@ -42,7 +42,7 @@ import Layout from '../layouts/Layout.astro';
         </label>
 
         <div class="champ">
-          <span id="label-photos">Photos d'inspiration (3 max, optionnel)</span>
+          <label id="label-photos" for="photos">Photos d'inspiration (3 max, optionnel)</label>
           <button type="button" class="dropzone" id="dropzone" aria-describedby="label-photos">
             <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 15.2V12a1.2 1.2 0 0 1 1.2-1.2h2.6A1.2 1.2 0 0 1 18.5 12v3.2"/><path d="M10.5 20.6v-4.2a1.2 1.2 0 0 1 1.2-1.2h8.6a1.2 1.2 0 0 1 1.2 1.2v4.2"/><path d="M7 26v-4.2a1.2 1.2 0 0 1 1.2-1.2h15.6a1.2 1.2 0 0 1 1.2 1.2V26"/><path d="M4.5 26h23"/><path d="M16 26v3"/><path d="M12.5 29h7"/><circle cx="16" cy="5.4" r="1.2"/><path d="M16 10.8V7.6"/></svg>
             Déposez vos photos ici ou cliquez pour choisir
@@ -64,7 +64,11 @@ import Layout from '../layouts/Layout.astro';
           <input type="text" name="facebook" autocomplete="off" placeholder="Nom ou lien de votre profil, si vous préférez être recontacté·e par Messenger" />
         </label>
 
-        <p class="piege" aria-hidden="true"><label>Votre site web <input type="text" name="site" tabindex="-1" autocomplete="off" /></label></p>
+        <!-- Piège à robots. Il reste dans l'arbre d'accessibilité : un champ focusable
+             sous aria-hidden est une violation (axe aria-hidden-focus), et un lecteur
+             d'écran qui le rencontrerait sans consigne le remplirait. D'où le libellé
+             explicite. tabindex="-1" le garde hors du parcours Tab. -->
+        <p class="piege"><label for="site">Laissez ce champ vide</label><input type="text" id="site" name="site" tabindex="-1" autocomplete="off" /></p>
 
         <!-- Si TURNSTILE_SECRET est activé côté Worker, insérer ici le widget :
              <div class="cf-turnstile" data-sitekey="…"></div> + le script Cloudflare Turnstile.
@@ -100,6 +104,10 @@ import Layout from '../layouts/Layout.astro';
   .remise input { accent-color: var(--rouge); width: 18px; height: 18px; }
   .duo { display: grid; gap: 0 16px; }
   @media (min-width: 560px) { .duo { grid-template-columns: 1fr 1fr; } }
+
+  /* L'input fichier est masqué derrière la dropzone : sans <label for>, il n'a aucun
+     nom accessible. Le label reprend l'allure de `.champ > span`. */
+  #label-photos { display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; }
 
   .dropzone {
     display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;
@@ -139,8 +147,12 @@ import Layout from '../layouts/Layout.astro';
   const description = form.elements.namedItem('description') as HTMLTextAreaElement;
   const date = form.elements.namedItem('date') as HTMLInputElement;
 
-  // Pré-remplissage depuis la carte (?produit=)
-  const produit = new URLSearchParams(location.search).get('produit');
+  // Pré-remplissage depuis la carte (#produit=). Fragment et non query : une query
+  // aurait fait de chaque produit une URL distincte et indexable (voir CarteGroupe).
+  // `location.search` reste lu pour les anciens liens déjà partagés.
+  const produit =
+    new URLSearchParams(location.hash.slice(1)).get('produit') ??
+    new URLSearchParams(location.search).get('produit');
   if (produit && !description.value) description.value = `Je souhaite commander : ${produit}\n`;
 
   // Date minimum : demain

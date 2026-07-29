@@ -9,8 +9,10 @@ import devanture from '../assets/generated/gen-devanture.png';
 interface Props {
   titre: string;
   description: string;
+  /** Pages sans URL propre à indexer (la 404, servie sous n'importe quelle adresse). */
+  noindex?: boolean;
 }
-const { titre, description } = Astro.props;
+const { titre, description, noindex = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const og = new URL('/og-image.png', Astro.site);
 ---
@@ -21,7 +23,9 @@ const og = new URL('/og-image.png', Astro.site);
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{titre}</title>
   <meta name="description" content={description} />
-  <link rel="canonical" href={canonical} />
+  {noindex
+    ? <meta name="robots" content="noindex, follow" />
+    : <link rel="canonical" href={canonical} />}
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="sitemap" href="/sitemap-index.xml" />
@@ -36,8 +40,8 @@ const og = new URL('/og-image.png', Astro.site);
 
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="/" aria-label="Variété de Saveurs — accueil">
-        <Image src={logo} alt="" width={44} height={44} widths={[44, 88]} sizes="44px" format="webp" />
+      <a class="brand" href="/">
+        <Image src={logo} alt="Variété de Saveurs" width={44} height={44} widths={[44, 88]} sizes="44px" format="webp" loading="eager" />
         <span class="brand-name">Variété de Saveurs</span>
       </a>
 
@@ -51,7 +55,7 @@ const og = new URL('/og-image.png', Astro.site);
       <nav class="nav-panel" id="nav-panel" aria-label="Navigation principale">
         <a class="nav-link" href="/carte/">La carte</a>
         <a class="nav-link" href="/galerie/">La galerie</a>
-        <a class="nav-link" href="/#sur-mesure">Sur mesure</a>
+        <a class="nav-link" href="/a-propos/">L'atelier</a>
         <a class="nav-link" href="/contact/">Contact</a>
       </nav>
 
@@ -65,7 +69,7 @@ const og = new URL('/og-image.png', Astro.site);
 
   <footer class="site-footer">
     <div class="wrap">
-      <Image class="footer-devanture" src={devanture} alt="" widths={[720, 1349]} sizes="(max-width: 760px) 92vw, 720px" format="webp" loading="lazy" />
+      <Image class="footer-devanture" src={devanture} alt="Dessin d'une devanture de pâtisserie : store festonné, vitrine garnie d'un gâteau sous cloche, d'une pièce à étages et de choux, enseigne vierge" widths={[720, 1349]} sizes="(max-width: 760px) 92vw, 720px" format="webp" loading="lazy" />
       <p class="footer-brand">
         <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 29.5V9.5"/><path d="M16 8.6c-1.4-2-1.4-4.2 0-6 1.4 1.8 1.4 4 0 6Z"/><path d="M16 13.2c-2.8-.4-4.7-2-5.4-4.9 2.9.4 4.8 2 5.4 4.9Z"/><path d="M16 13.2c2.8-.4 4.7-2 5.4-4.9-2.9.4-4.8 2-5.4 4.9Z"/><path d="M16 18.2c-2.8-.4-4.7-2-5.4-4.9 2.9.4 4.8 2 5.4 4.9Z"/><path d="M16 18.2c2.8-.4 4.7-2 5.4-4.9-2.9.4-4.8 2-5.4 4.9Z"/><path d="M16 23.2c-2.8-.4-4.7-2-5.4-4.9 2.9.4 4.8 2 5.4 4.9Z"/><path d="M16 23.2c2.8-.4 4.7-2 5.4-4.9-2.9.4-4.8 2-5.4 4.9Z"/></svg>
         <span>Variété de Saveurs</span>
@@ -73,8 +77,10 @@ const og = new URL('/og-image.png', Astro.site);
       <p class="footer-tag">Pâtisserie artisanale, sur commande</p>
       <p class="footer-coords">2 impasse du Printemps, 17130 Montendre · <a href="tel:+33516483243">05&nbsp;16&nbsp;48&nbsp;32&nbsp;43</a></p>
       <nav class="footer-links" aria-label="Liens de pied de page">
+        <a href="/a-propos/">À propos</a>
         <a href="/contact/">Contact &amp; infos pratiques</a>
         <a href="https://www.facebook.com/p/Vari%C3%A9t%C3%A9-De-Saveurs-100094733802848/" target="_blank" rel="noopener">Facebook</a>
+        <a href="/confidentialite/">Confidentialité</a>
         <a href="/mentions-legales/">Mentions légales</a>
       </nav>
     </div>

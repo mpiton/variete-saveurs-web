@@ -29,7 +29,9 @@ const Titre = niveau;
                 ? <Fragment><small>{prix.prefixe}</small>{prix.montant}</Fragment>
                 : prix.montant}
           </span>
-          <a class="row-cta" href={`/commander/?produit=${encodeURIComponent(p.nom)}`} aria-label={`Commander : ${p.nom}`}>Commander</a>
+          {/* Fragment et non query : `?produit=` créait une URL indexable par produit,
+              soit 34 clones de /commander/ avec le même titre et la même description. */}
+          <a class="row-cta" href={`/commander/#produit=${encodeURIComponent(p.nom)}`} aria-label={`Commander : ${p.nom}`}>Commander</a>
         </li>
       );
     })}

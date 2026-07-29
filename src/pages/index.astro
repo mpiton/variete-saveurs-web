@@ -92,7 +92,8 @@ const localBusiness = {
         <svg class="sparkle sparkle-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.7 5.3 2.7 7.3 8 8-5.3.7-7.3 2.7-8 8-.7-5.3-2.7-7.3-8-8 5.3-.7 7.3-2.7 8-8z" fill="currentColor"/></svg>
 
         <article class="spec spec-a" data-reveal>
-          <Image src={archeEvenement} alt="Gâteau de mariage à deux étages couronné de roses, sur un présentoir" widths={[520, 1024]} sizes="(max-width: 899px) 88vw, 520px" format="webp" loading="lazy" />
+          {/* eager : première carte après le héro, déjà dans le viewport sur mobile. */}
+          <Image src={archeEvenement} alt="Gâteau de mariage à deux étages couronné de roses, sur un présentoir" widths={[520, 1024]} sizes="(max-width: 899px) 88vw, 520px" format="webp" loading="eager" />
           <div class="spec-body">
             <h3>Gâteaux d'événement</h3>
             <p>Mariages, anniversaires, baptêmes&nbsp;: des pièces montées à votre image.</p>
@@ -108,7 +109,8 @@ const localBusiness = {
         </article>
 
         <article class="spec spec-c" data-reveal>
-          <Image src={buffet} alt="Buffet de canapés et mignardises sucrées et salées, dressé pour une réception" widths={[560, 1120]} sizes="(max-width: 899px) 74vw, 560px" format="webp" loading="lazy" />
+          <!-- quality 68 : texture dense de mignardises, 231 Ko à la qualité par défaut. -->
+          <Image src={buffet} alt="Buffet de canapés et mignardises sucrées et salées, dressé pour une réception" widths={[560, 1120]} sizes="(max-width: 899px) 74vw, 560px" format="webp" quality={68} loading="lazy" />
           <div class="spec-body">
             <h3>Buffets à volonté</h3>
             <p>Canapés et mignardises, sucrées comme salées, dressés pour vos réceptions.</p>
@@ -211,8 +213,8 @@ const localBusiness = {
 
   <!-- ============ Bande finale ============ -->
   <section class="finale" aria-labelledby="finale-title">
-    <Image class="finale-mac finale-mac-a" src={macaronA} alt="" widths={[170, 340]} sizes="170px" format="webp" loading="lazy" />
-    <Image class="finale-mac finale-mac-b" src={macaronB} alt="" widths={[150, 300]} sizes="150px" format="webp" loading="lazy" />
+    <Image class="finale-mac finale-mac-a" src={macaronA} alt="Macaron à coque crème poudrée d'or, ganache visible, vu de trois quarts" widths={[170, 340]} sizes="170px" format="webp" loading="lazy" />
+    <Image class="finale-mac finale-mac-b" src={macaronB} alt="Macaron à coque vert pistache, garni d'une crème claire" widths={[150, 300]} sizes="150px" format="webp" loading="lazy" />
     <div class="wrap finale-inner">
       <h2 id="finale-title" data-reveal>Une occasion à fêter&nbsp;?</h2>
       <div data-reveal>

@@ -1,0 +1,144 @@
+---
+import { Image } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+import devanture from '../assets/generated/gen-devanture.png';
+import partFraisier from '../assets/generated/gen-part-fraisier.png';
+
+// À RELIRE PAR ALINE avant mise en ligne. Cette page ne contient que des faits déjà
+// vérifiés (PRODUCT.md « Contenu à fournir ») : adresse, horaires, zone de livraison,
+// fonctionnement de la commande. Le « texte à propos » listé comme restant à fournir
+// dans PRODUCT.md n'est pas inventé ici — il manque encore, au minimum :
+//   - depuis quand Aline pâtisse, son parcours, ce qui l'a menée à ouvrir
+//   - ce qu'elle préfère faire, ou refuse de faire
+//   - une photo réelle d'elle ou de l'atelier, pour remplacer les illustrations
+---
+<Layout
+  titre="L'atelier — qui fait vos gâteaux chez Variété de Saveurs"
+  description="Variété de Saveurs, c'est une pâtissière à Montendre qui travaille à la commande. Comment se passe une demande, ce qui se fait, ce qui ne se fait pas."
+>
+  <section class="section atelier" aria-labelledby="titre-atelier">
+    <div class="wrap atelier-haut">
+      <div>
+        <h1 id="titre-atelier" class="section-title">L'atelier</h1>
+        <p class="section-intro">
+          Derrière Variété de Saveurs, il y a une personne&nbsp;: Aline Piton. Pas une
+          chaîne, pas une centrale d'achat. Une entreprise individuelle à Montendre,
+          en Charente-Maritime, où chaque commande est faite à la demande.
+        </p>
+        <p>
+          Ça change deux choses concrètes. La première, c'est qu'il n'y a pas de vitrine
+          où piocher&nbsp;: rien n'est préparé d'avance, tout part d'une conversation.
+          La seconde, c'est qu'il faut s'y prendre un peu à l'avance, surtout pour une
+          pièce d'événement.
+        </p>
+      </div>
+      <Image
+        class="atelier-media"
+        src={devanture}
+        alt="Dessin d'une devanture de pâtisserie : store festonné, vitrine garnie d'un gâteau sous cloche, d'une pièce à étages et de choux"
+        widths={[430, 860]}
+        sizes="(max-width: 899px) 88vw, 430px"
+        format="webp"
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
+
+    <div class="wrap">
+      <h2>Fait à la commande, vraiment</h2>
+      <p>
+        Un fraisier commandé pour samedi est monté pour samedi. Les buffets sont dressés
+        le jour de la remise. Les gâteaux d'anniversaire sont décorés d'après ce que vous
+        décrivez ou d'après la photo que vous envoyez, pas d'après un catalogue de modèles
+        figés. La <a href="/carte/">carte</a> donne des repères et des prix, mais elle n'est
+        pas une limite&nbsp;: si votre idée n'y figure pas, elle
+        <a href="/#sur-mesure">se fait quand même</a>.
+      </p>
+      <p>
+        La <a href="/galerie/">galerie</a> ne montre que des commandes réellement sorties de
+        l'atelier. Aucune photo de banque d'images, aucun rendu de synthèse&nbsp;: ce que
+        vous voyez, quelqu'un l'a mangé.
+      </p>
+
+      <h2>Comment se passe une commande</h2>
+      <ol class="etapes">
+        <li>
+          <strong>Vous décrivez votre envie</strong> par le
+          <a href="/commander/">formulaire</a>, par téléphone ou via Facebook. Une date,
+          un nombre de parts, un thème&nbsp;: même flou, c'est un point de départ suffisant.
+          Une photo d'inspiration aide beaucoup.
+        </li>
+        <li>
+          <strong>Vous recevez un devis gratuit</strong>, sous 48&nbsp;h. Si un détail
+          coince ou change le prix, on vous le dit à ce moment-là, pas à la remise.
+        </li>
+        <li>
+          <strong>Vous validez, et c'est lancé.</strong> Rien ne se paie sur le site&nbsp;:
+          ni panier, ni carte bancaire, ni compte à créer. Le règlement se fait avec la
+          pâtissière, directement.
+        </li>
+        <li>
+          <strong>Vous récupérez votre commande</strong> au 2&nbsp;impasse du Printemps,
+          du lundi au samedi entre 14&nbsp;h&nbsp;30 et 18&nbsp;h. Ou elle vous est livrée,
+          pour 10&nbsp;€, dans un rayon de 30&nbsp;km autour de Montendre.
+        </li>
+      </ol>
+
+      <h2>Ce qui n'est pas proposé</h2>
+      <p>
+        Autant le dire franchement. Il n'y a pas de vente en ligne&nbsp;: le site sert à
+        se parler, pas à encaisser. Il n'y a pas de boutique ouverte en continu où entrer
+        pour acheter une part à l'improviste, les horaires sont ceux du retrait. Et une
+        commande de dernière minute pour le lendemain a peu de chances d'aboutir sur une
+        pièce montée&nbsp;: mieux vaut appeler pour savoir ce qui reste faisable.
+      </p>
+
+      <Image
+        class="atelier-fin"
+        src={partFraisier}
+        alt="Part de fraisier sur une assiette, fraises en rondelles et fourchette dorée"
+        widths={[430, 860]}
+        sizes="(max-width: 899px) 88vw, 430px"
+        format="webp"
+        loading="lazy"
+      />
+    </div>
+  </section>
+
+  <section class="finale" aria-labelledby="finale-title">
+    <div class="wrap finale-inner">
+      <h2 id="finale-title">Une occasion à fêter&nbsp;?</h2>
+      <div>
+        <a class="btn btn-gold btn-big" href="/commander/">Décrire mon envie</a>
+      </div>
+      <p class="finale-note">Devis gratuit · Réponse sous 48&nbsp;h</p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .atelier { padding-block: clamp(3rem, 6vw, 4.5rem) var(--section-pad); }
+
+  .atelier-haut { display: grid; gap: 2rem; align-items: center; margin-bottom: 1rem; }
+  @media (min-width: 900px) {
+    .atelier-haut { grid-template-columns: 1fr 430px; gap: 3rem; }
+  }
+  .atelier-media { width: 100%; height: auto; }
+
+  .atelier h2 {
+    font-family: var(--font-display); font-weight: 700; font-size: 1.6rem;
+    letter-spacing: -0.02em; margin-top: 2.5rem; margin-bottom: 0.6rem;
+    max-width: 640px;
+  }
+  .atelier p { color: var(--muted); margin-bottom: 0.9rem; max-width: 640px; }
+  .atelier .section-intro { max-width: 640px; }
+
+  .etapes { margin: 0 0 0.9rem 1.3rem; max-width: 640px; color: var(--muted); }
+  .etapes li { margin-bottom: 0.9rem; padding-left: 0.2rem; }
+  .etapes strong { color: var(--ink); }
+
+  .atelier-fin {
+    display: block; width: min(430px, 100%); height: auto;
+    margin: 2.5rem auto 0;
+  }
+</style>

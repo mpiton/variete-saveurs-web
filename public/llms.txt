@@ -1,0 +1,29 @@
+# Variété de Saveurs
+
+> Pâtisserie artisanale à Montendre (Charente-Maritime, 17130). Tout est fait à la commande :
+> entremets, gâteaux d'anniversaire, pièces montées, macarons, buffets sucrés et salés.
+> Le site ne vend pas en ligne — il sert à envoyer une demande de devis.
+
+Entreprise individuelle, gérée par Aline Piton. Retrait sur place du lundi au samedi de
+14 h 30 à 18 h, ou livraison dans un rayon de 30 km autour de Montendre (+10 €).
+Devis gratuit, réponse sous 48 h. Aucun paiement ni compte client sur le site.
+
+## Pages
+
+- [Accueil](https://variete-de-saveurs.fr/) : la marque, les spécialités, un extrait de la carte.
+- [La carte](https://variete-de-saveurs.fr/carte/) : produits et prix par famille (gâteaux, buffets, petites pâtisseries, pièces d'événement). Chaque ligne mène au formulaire pré-rempli.
+- [Commander](https://variete-de-saveurs.fr/commander/) : le formulaire de demande de devis (description libre, date, retrait ou livraison, photos d'inspiration).
+- [La galerie](https://variete-de-saveurs.fr/galerie/) : photos de commandes réellement réalisées, filtrables par famille.
+- [À propos — L'atelier](https://variete-de-saveurs.fr/a-propos/) : qui fait les gâteaux, comment se passe une commande.
+- [Contact & infos pratiques](https://variete-de-saveurs.fr/contact/) : adresse de retrait, horaires, zone de livraison, téléphone, email, Facebook.
+
+## Légal
+
+- [Mentions légales](https://variete-de-saveurs.fr/mentions-legales/) : éditeur, SIRET, hébergeur.
+- [Confidentialité](https://variete-de-saveurs.fr/confidentialite/) : ce que devient une demande envoyée par le formulaire, sous-traitants, durée de conservation, droits RGPD.
+
+## Contact
+
+- Téléphone : 05 16 48 32 43
+- Email : contact@variete-de-saveurs.fr
+- Adresse : 2 impasse du Printemps, 17130 Montendre, France

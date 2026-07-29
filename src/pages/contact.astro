@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 ---
 <Layout
   titre="Contact & infos pratiques — Variété de Saveurs"
-  description="Comment commander, retrait et livraison locale, horaires et coordonnées de la pâtisserie Variété de Saveurs."
+  description="Retrait à Montendre du lundi au samedi, 14 h 30 – 18 h. Livraison dans un rayon de 30 km. Téléphone, email et Facebook de Variété de Saveurs."
 >
   <section class="section contact" aria-labelledby="titre-infos">
     <div class="wrap">
@@ -24,7 +24,10 @@ import Layout from '../layouts/Layout.astro';
           <h2>Nous joindre</h2>
           <p>
             <a href="tel:+33516483243">05&nbsp;16&nbsp;48&nbsp;32&nbsp;43</a><br />
-            <a href="mailto:contact@variete-de-saveurs.fr">contact@variete-de-saveurs.fr</a><br />
+            {/* email_off : Cloudflare (Scrape Shield) réécrit sinon ce mailto en
+                /cdn-cgi/l/email-protection#… qui répond 404. Opt-out documenté,
+                il évite de dépendre d'un réglage du dashboard. */}
+            <!--email_off--><a href="mailto:contact@variete-de-saveurs.fr">contact@variete-de-saveurs.fr</a><!--/email_off--><br />
             <a href="https://www.facebook.com/p/Vari%C3%A9t%C3%A9-De-Saveurs-100094733802848/" target="_blank" rel="noopener">Page Facebook</a>
           </p>
         </div>

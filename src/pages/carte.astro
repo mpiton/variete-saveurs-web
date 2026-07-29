@@ -4,7 +4,7 @@ import CarteGroupe from '../components/CarteGroupe.astro';
 import { carte } from '../lib/carte';
 ---
 <Layout
-  titre="La carte — Variété de Saveurs"
+  titre="La carte et les prix — Variété de Saveurs, Montendre"
   description="Entremets, macarons, douceurs et pièces d'événement : la carte et les prix de la pâtisserie Variété de Saveurs. Chaque ligne se commande en ligne."
 >
   <section class="section carte-page" aria-labelledby="carte-title">
@@ -21,6 +21,34 @@ import { carte } from '../lib/carte';
 
       <p class="note" data-reveal>Prix indicatifs, à la part pour les gâteaux, à la pièce pour le reste. Chaque commande passe par un devis gratuit.
       Gâteaux : forme au choix (rond, carré, rectangle, cœur). Buffets : à partir de 15 pièces, 4 saveurs minimum.</p>
+
+      <div class="bon-a-savoir" data-reveal>
+        <h2>Bon à savoir avant de commander</h2>
+        <p>
+          Les tarifs ci-dessus servent de repère, pas de tarif définitif. Le devis tient compte
+          du nombre de convives, du décor demandé et de la finition&nbsp;: un gâteau à étages avec
+          modelage prend plus de temps qu'un entremets lisse du même poids, et ça se voit sur le prix.
+          Vous recevez ce chiffre avant que quoi que ce soit ne démarre, gratuitement, sous 48&nbsp;h.
+        </p>
+        <p>
+          Pour les gâteaux, comptez le nombre de convives plutôt qu'un diamètre&nbsp;: la pâtissière
+          adapte le format. La forme est libre, ronde, carrée, rectangulaire ou en cœur, sans
+          supplément. Les buffets se commandent à partir de 15 pièces avec quatre saveurs minimum,
+          et se composent librement entre le salé et le sucré.
+        </p>
+        <p>
+          Prévoyez quelques jours d'avance, davantage pour une pièce d'événement en pleine saison
+          de mariages. Le retrait se fait au 2 impasse du Printemps à Montendre, du lundi au samedi
+          de 14&nbsp;h&nbsp;30 à 18&nbsp;h&nbsp;; la livraison coûte 10&nbsp;€ dans un rayon de
+          30&nbsp;km. Une allergie ou une intolérance dans la table&nbsp;? Signalez-la dans votre
+          demande, la réponse vous dira franchement ce qui est faisable et ce qui ne l'est pas.
+        </p>
+        <p>
+          Rien ne vous oblige à choisir dans cette liste. Elle montre ce qui revient le plus souvent,
+          mais tout se fait aussi <a href="/commander/">sur mesure</a>, et la
+          <a href="/galerie/">galerie</a> donne une meilleure idée de ce qui sort de l'atelier.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -38,4 +66,11 @@ import { carte } from '../lib/carte';
 <style>
   .carte-page { padding-block: clamp(3rem, 6vw, 4.5rem) var(--section-pad); }
   .note { text-align: center; margin-top: 1.6rem; color: var(--muted); font-size: 0.875rem; }
+
+  .bon-a-savoir { max-width: 640px; margin: 3rem auto 0; }
+  .bon-a-savoir h2 {
+    font-family: var(--font-display); font-weight: 700; font-size: 1.6rem;
+    letter-spacing: -0.02em; margin-bottom: 0.7rem;
+  }
+  .bon-a-savoir p { color: var(--muted); margin-bottom: 0.9rem; }
 </style>

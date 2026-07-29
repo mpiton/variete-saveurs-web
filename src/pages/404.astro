@@ -1,0 +1,47 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Sans ce fichier, Cloudflare Pages renvoie l'accueil en 200 pour toute URL inconnue :
+// /sitemap.xml, /llms.txt et les 404 réels passaient tous pour des pages valides.
+---
+<Layout
+  titre="Page introuvable — Variété de Saveurs"
+  description="Cette page n'existe pas ou plus. Retrouvez la carte, la galerie et le formulaire de commande de la pâtisserie Variété de Saveurs à Montendre."
+  noindex
+>
+  <section class="section erreur" aria-labelledby="titre-404">
+    <div class="wrap">
+      <p class="code" aria-hidden="true">404</p>
+      <h1 id="titre-404" class="section-title">Cette page n'existe pas</h1>
+      <p class="section-intro">
+        Le lien est peut-être périmé, ou l'adresse comporte une faute de frappe.
+        Voici par où reprendre&nbsp;:
+      </p>
+      <nav class="pistes" aria-label="Pages principales">
+        <a class="btn btn-primary btn-big" href="/carte/">Voir la carte</a>
+        <a class="btn btn-outline-red" href="/galerie/">La galerie</a>
+        <a class="btn btn-outline-red" href="/commander/">Commander</a>
+        <a class="btn btn-outline-red" href="/contact/">Contact</a>
+      </nav>
+      <p class="secours">
+        Vous cherchiez quelque chose de précis&nbsp;? Appelez le
+        <a href="tel:+33516483243">05&nbsp;16&nbsp;48&nbsp;32&nbsp;43</a>.
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .erreur { padding-block: clamp(3rem, 6vw, 4.5rem) var(--section-pad); text-align: center; }
+  .code {
+    font-family: var(--font-display); font-weight: 800; letter-spacing: -0.03em;
+    font-size: clamp(4rem, 3rem + 8vw, 8rem); line-height: 1;
+    color: var(--rose); margin-bottom: 0.5rem;
+  }
+  .section-intro { margin-inline: auto; max-width: 46ch; }
+  .pistes {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+    margin-block: 2rem 2.5rem;
+  }
+  .secours { color: var(--muted); font-size: 0.95rem; }
+</style>

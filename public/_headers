@@ -1,0 +1,28 @@
+# Cloudflare Pages *concatène* les valeurs d'un même en-tête quand plusieurs règles
+# correspondent — il ne les écrase pas. Un `Cache-Control` sur `/*` gagnerait donc
+# toujours sur celui de `/_astro/*` (première valeur lue par le navigateur).
+# D'où le découpage : en-têtes de sécurité partout, cache par forme d'URL.
+
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  # 'unsafe-inline' sur script-src : Astro émet un <script type="module"> inline et
+  # l'hébergement statique ne permet pas de nonce. Les autres directives font le travail.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+
+# Noms de fichiers hachés par Astro : le contenu ne change jamais sous une même URL.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Les pages HTML : `build.format` reste en `directory`, donc toute page se termine
+# par `/`. Le HTML change à chaque déploiement, qui purge le cache Cloudflare.
+/
+  Cache-Control: public, max-age=600, must-revalidate
+/*/
+  Cache-Control: public, max-age=600, must-revalidate
+
+/api/*
+  Cache-Control: no-store

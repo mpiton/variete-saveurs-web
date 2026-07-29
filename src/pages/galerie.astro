@@ -98,7 +98,7 @@ const grands = await Promise.all(
 ---
 <Layout
   titre="La galerie — Variété de Saveurs"
-  description="Les gâteaux, pièces d'événement et buffets réalisés par Variété de Saveurs à Montendre. Photos de commandes réelles."
+  description="Gâteaux d'anniversaire, pièces montées, number cakes, buffets sucrés et salés : les photos de commandes réellement réalisées par Variété de Saveurs à Montendre."
 >
   <section class="section galerie-page" aria-labelledby="galerie-title">
     <div class="wrap">
@@ -107,6 +107,30 @@ const grands = await Promise.all(
         Des commandes réelles, sorties du fournil. Votre idée n'est pas dans la liste&nbsp;?
         Elle se fait quand même, <a href="/commander/">décrivez-la</a>.
       </p>
+
+      <div class="galerie-intro" data-reveal>
+        <p>
+          Aucune de ces photos ne vient d'une banque d'images. Ce sont des gâteaux commandés
+          par des clients de Montendre et des alentours, photographiés avant d'être remis.
+          Les formes, les couleurs et les décors viennent de ce que les gens ont demandé,
+          d'où le mélange de thèmes d'enfants, de pièces de mariage et de plateaux de buffet.
+        </p>
+        <p>
+          Les filtres suivent les familles de la <a href="/carte/">carte</a>&nbsp;:
+          les <strong>gâteaux</strong> rassemblent les entremets et les gâteaux
+          d'anniversaire, à partager de 6 à 30 parts. Les <strong>pièces d'événement</strong>
+          sont les formats à étages, sculptés ou number cakes, pour les mariages, baptêmes
+          et grands anniversaires. Les <strong>buffets salés et sucrés</strong> se commandent
+          à la pièce, à partir de 15 pièces et quatre saveurs. Les
+          <strong>petites pâtisseries</strong> réunissent macarons, cupcakes, cake pops
+          et sablés décorés, souvent pris en complément d'un gâteau.
+        </p>
+        <p>
+          Cliquez sur une photo pour l'agrandir. Si l'une d'elles correspond à ce que vous
+          cherchez, dites-le dans votre demande&nbsp;: la pâtissière saura de laquelle
+          il s'agit, et vous pouvez joindre l'image au formulaire.
+        </p>
+      </div>
 
       <div class="galerie">
         <fieldset class="filtres" data-reveal>
@@ -139,6 +163,7 @@ const grands = await Promise.all(
                   sizes="(max-width: 559px) 46vw, (max-width: 899px) 45vw, 30vw"
                   format="webp"
                   loading={i < 6 ? 'eager' : 'lazy'}
+                  fetchpriority={i === 0 ? 'high' : undefined}
                 />
               </button>
             </li>
@@ -175,6 +200,10 @@ const grands = await Promise.all(
 
 <style>
   .galerie-page { padding-block: clamp(3rem, 6vw, 4.5rem) var(--section-pad); }
+
+  .galerie-intro { max-width: 640px; margin-bottom: 2.5rem; }
+  .galerie-intro p { color: var(--muted); margin-bottom: 0.9rem; }
+  .galerie-intro strong { color: var(--ink); font-weight: 600; }
 
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;

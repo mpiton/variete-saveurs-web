@@ -1,0 +1,122 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Page RGPD. Les mentions légales gardent l'identité et l'hébergeur ; tout ce qui
+// concerne le traitement des données vit ici, sous-traitants nommés (exigence DPA).
+const MAJ = '29 juillet 2026';
+---
+<Layout
+  titre="Confidentialité et données personnelles — Variété de Saveurs"
+  description="Ce que devient une demande envoyée depuis le site : qui la reçoit, par où elle passe, combien de temps elle est conservée, et comment demander sa suppression."
+>
+  <section class="section confidentialite" aria-labelledby="titre-confidentialite">
+    <div class="wrap">
+      <h1 id="titre-confidentialite" class="section-title">Confidentialité</h1>
+      <p class="section-intro">
+        Le site ne fait qu'une chose avec vos informations&nbsp;: les transmettre à la pâtissière
+        pour qu'elle vous réponde. Voici le détail, sans détour.
+      </p>
+
+      <h2>Ce que nous recueillons</h2>
+      <p>
+        Uniquement ce que vous tapez dans le formulaire de commande&nbsp;: votre description,
+        la date souhaitée, le mode de remise et l'adresse si vous demandez une livraison,
+        vos prénom, nom, téléphone, email, votre profil Facebook si vous préférez Messenger,
+        et les photos d'inspiration que vous joignez. Rien d'autre. Pas de champ caché qui
+        collecte votre navigation, pas de profil publicitaire, pas de revente.
+      </p>
+      <p>
+        Le site n'a ni compte client ni paiement en ligne. Il ne pose aucun cookie de suivi
+        ni de mesure d'audience&nbsp;: vous n'avez pas de bandeau à cliquer parce qu'il n'y a
+        rien à accepter.
+      </p>
+
+      <h2>Pourquoi, et sur quelle base</h2>
+      <p>
+        Votre demande est la base légale. Vous nous écrivez pour obtenir un devis&nbsp;;
+        sans vos coordonnées et votre description, il n'y a pas de devis possible. C'est une
+        mesure précontractuelle au sens de l'article 6.1.b du RGPD. Vos informations servent
+        à établir ce devis, à vous joindre pour préciser un détail, et à organiser le retrait
+        ou la livraison. Elles ne servent à rien d'autre.
+      </p>
+
+      <h2>Qui les voit</h2>
+      <p>
+        Aline Piton, la pâtissière, qui reçoit la demande dans sa boîte mail professionnelle.
+        C'est elle la responsable du traitement. Deux sous-traitants au sens de l'article 28
+        du RGPD font transiter la demande, sans l'exploiter pour leur propre compte&nbsp;;
+        chacun est lié par un accord de traitement des données (DPA)&nbsp;:
+      </p>
+      <ul class="sous-traitants">
+        <li>
+          <strong>Brevo</strong> (Sendinblue SAS, 17 rue Salneuve, 75017 Paris, France) achemine
+          l'email et ses pièces jointes. Données hébergées dans l'Union européenne.
+        </li>
+        <li>
+          <strong>Cloudflare, Inc.</strong> (101 Townsend St, San Francisco, CA 94107, États-Unis)
+          héberge le site et transporte l'envoi du formulaire. Les transferts hors UE reposent sur
+          les clauses contractuelles types de la Commission européenne.
+        </li>
+      </ul>
+      <p>
+        Personne d'autre&nbsp;: la liste de sous-traitants s'arrête là. Aucune régie publicitaire,
+        aucun courtier en données, aucun réseau social n'a accès à ce que vous envoyez.
+        Si un sous-traitant change, cette page est mise à jour.
+      </p>
+
+      <h2>Combien de temps</h2>
+      <p>
+        Le site lui-même ne conserve rien&nbsp;: il n'a pas de base de données, votre demande
+        n'existe que sous forme d'email. Cet email reste dans la boîte de la pâtissière trois ans
+        après notre dernier échange, le temps de retrouver une commande passée si vous revenez,
+        puis il est supprimé. Les photos d'inspiration partent avec.
+      </p>
+
+      <h2>Vos droits</h2>
+      <p>
+        Vous pouvez demander à consulter ce que nous avons sur vous, le corriger, le faire
+        supprimer, ou vous opposer à son usage. Écrivez à
+        {/* email_off : voir contact.astro */}
+        <!--email_off--><a href="mailto:contact@variete-de-saveurs.fr">contact@variete-de-saveurs.fr</a><!--/email_off-->
+        ou appelez le <a href="tel:+33516483243">05&nbsp;16&nbsp;48&nbsp;32&nbsp;43</a>&nbsp;;
+        nous répondons sous un mois. Si la réponse ne vous satisfait pas, vous pouvez saisir la
+        Commission nationale de l'informatique et des libertés, la CNIL, sur
+        <a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>.
+      </p>
+
+      <h2>Sécurité</h2>
+      <p>
+        Le site est servi en HTTPS de bout en bout et les photos que vous déposez sont
+        redimensionnées dans votre navigateur avant l'envoi, ce qui limite ce qui circule.
+        Comme il n'y a pas de base de données, il n'y a pas de base de données à pirater.
+        En cas de violation de données présentant un risque, la CNIL est prévenue dans les
+        72 heures (article 33 du RGPD). Si ce risque est élevé pour vous, vous en êtes
+        informé directement et dans les meilleurs délais (article 34).
+      </p>
+
+      <p class="maj">Dernière mise à jour&nbsp;: {MAJ}.</p>
+      <p class="renvoi">
+        L'identité de l'éditeur, le SIRET et l'hébergeur figurent dans les
+        <a href="/mentions-legales/">mentions légales</a>.
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .confidentialite { padding-block: clamp(3rem, 6vw, 4.5rem) var(--section-pad); }
+  .confidentialite .section-intro,
+  .confidentialite h2,
+  .confidentialite p,
+  .confidentialite ul { max-width: 640px; }
+  .confidentialite h2 {
+    font-family: var(--font-display); font-weight: 700; font-size: 1.4rem;
+    letter-spacing: -0.015em; margin-top: 2.2rem; margin-bottom: 0.5rem;
+  }
+  .confidentialite p { color: var(--muted); margin-bottom: 0.9rem; }
+  .sous-traitants { margin: 0 0 0.9rem 1.2rem; color: var(--muted); }
+  .sous-traitants li { margin-bottom: 0.7rem; }
+  .sous-traitants strong { color: var(--ink); }
+  .maj, .renvoi { font-size: 0.9rem; margin-top: 2rem; }
+  .renvoi { margin-top: 0.3rem; }
+</style>

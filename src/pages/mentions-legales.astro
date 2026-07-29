@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 ---
 <Layout
   titre="Mentions légales — Variété de Saveurs"
-  description="Mentions légales du site variete-de-saveurs.fr."
+  description="Éditeur, SIRET, directrice de la publication et hébergeur du site variete-de-saveurs.fr, pâtisserie artisanale Variété de Saveurs à Montendre (17130)."
 >
   <section class="section mentions">
     <div class="wrap">
@@ -15,20 +15,17 @@ import Layout from '../layouts/Layout.astro';
         <dt>Directrice de la publication</dt>
         <dd>Aline Piton</dd>
         <dt>Contact</dt>
-        <dd><a href="mailto:contact@variete-de-saveurs.fr">contact@variete-de-saveurs.fr</a> · <a href="tel:+33516483243">05 16 48 32 43</a></dd>
+        {/* email_off : voir contact.astro — évite la réécriture Cloudflare en /cdn-cgi/l/… */}
+        <dd><!--email_off--><a href="mailto:contact@variete-de-saveurs.fr">contact@variete-de-saveurs.fr</a><!--/email_off--> · <a href="tel:+33516483243">05 16 48 32 43</a></dd>
         <dt>Hébergement</dt>
         <dd>Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, États-Unis.
         Téléphone&nbsp;: +1 888 993 5273.</dd>
         <dt>Données personnelles</dt>
         <dd>Le formulaire de commande envoie ce que vous saisissez (coordonnées, demande, photos)
         par email à la pâtissière, qui s'en sert pour établir votre devis et vous répondre.
-        La base légale, c'est votre demande elle-même&nbsp;: sans ces informations, pas de devis.
-        Le site ne conserve rien. L'email transite par Brevo (Sendinblue SAS, 17 rue Salneuve,
-        75017 Paris), le site est hébergé par Cloudflare. Votre message reste dans la boîte mail
-        de la pâtissière trois ans après notre dernier échange, puis il est supprimé.
-        Nous ne les revendons pas et ne les utilisons pas à des fins publicitaires.
-        Vous pouvez demander à consulter, corriger ou supprimer vos données à l'adresse email
-        ci-dessus. Si la réponse ne vous convient pas, vous pouvez saisir la CNIL (cnil.fr).</dd>
+        Le site ne conserve rien, ne pose aucun cookie de suivi et ne revend rien.
+        Le détail — base légale, sous-traitants, durée de conservation, vos droits — est sur la
+        page <a href="/confidentialite/">confidentialité</a>.</dd>
       </dl>
     </div>
   </section>

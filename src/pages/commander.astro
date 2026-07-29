@@ -1,5 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
+// Mêmes plafonds que le Worker : le navigateur empêche la saisie, le serveur
+// reste le juge. Sans `maxlength`, un texte trop long ne serait refusé qu'après
+// l'envoi, et l'îlot n'a qu'un message d'échec générique à afficher.
+import { MAX_LONGUEURS } from '../lib/commande';
+
+// Le widget anti-spam n'apparaît que si la clé publique est fournie au build.
+// L'ordre d'activation compte : poser d'abord PUBLIC_TURNSTILE_SITEKEY (le widget
+// s'affiche, le Worker ignore encore le jeton), puis TURNSTILE_SECRET (le Worker
+// vérifie). Dans l'autre sens, le Worker refuse toutes les commandes le temps que
+// le site soit rebâti (ARCHI.md §4, hors dépôt).
+const sitekeyTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY;
 ---
 <Layout
   titre="Commander — Variété de Saveurs"
@@ -21,7 +32,7 @@ import Layout from '../layouts/Layout.astro';
       <form id="form-commande" method="post" action="/api/commande" enctype="multipart/form-data" novalidate>
         <label class="champ">
           <span>Votre demande *</span>
-          <textarea name="description" rows="5" required
+          <textarea name="description" rows="5" required maxlength={MAX_LONGUEURS.description}
             placeholder="Ex. : un fraisier pour 8 personnes samedi, ou un gâteau à étages sur le thème de la forêt…"></textarea>
         </label>
 
@@ -38,7 +49,7 @@ import Layout from '../layouts/Layout.astro';
 
         <label class="champ" id="champ-adresse" hidden>
           <span>Adresse de livraison *</span>
-          <textarea name="adresse" rows="2" placeholder="Adresse complète"></textarea>
+          <textarea name="adresse" rows="2" maxlength={MAX_LONGUEURS.adresse} placeholder="Adresse complète"></textarea>
         </label>
 
         <div class="champ">
@@ -52,16 +63,16 @@ import Layout from '../layouts/Layout.astro';
         </div>
 
         <div class="duo">
-          <label class="champ"><span>Prénom *</span><input type="text" name="prenom" autocomplete="given-name" required /></label>
-          <label class="champ"><span>Nom *</span><input type="text" name="nom" autocomplete="family-name" required /></label>
+          <label class="champ"><span>Prénom *</span><input type="text" name="prenom" autocomplete="given-name" required maxlength={MAX_LONGUEURS.prenom} /></label>
+          <label class="champ"><span>Nom *</span><input type="text" name="nom" autocomplete="family-name" required maxlength={MAX_LONGUEURS.nom} /></label>
         </div>
         <div class="duo">
-          <label class="champ"><span>Téléphone *</span><input type="tel" name="telephone" autocomplete="tel" required /></label>
-          <label class="champ"><span>Email *</span><input type="email" name="email" autocomplete="email" required /></label>
+          <label class="champ"><span>Téléphone *</span><input type="tel" name="telephone" autocomplete="tel" required maxlength={MAX_LONGUEURS.telephone} /></label>
+          <label class="champ"><span>Email *</span><input type="email" name="email" autocomplete="email" required maxlength={MAX_LONGUEURS.email} /></label>
         </div>
         <label class="champ">
           <span>Votre profil Facebook (optionnel)</span>
-          <input type="text" name="facebook" autocomplete="off" placeholder="Nom ou lien de votre profil, si vous préférez être recontacté·e par Messenger" />
+          <input type="text" name="facebook" autocomplete="off" maxlength={MAX_LONGUEURS.facebook} placeholder="Nom ou lien de votre profil, si vous préférez être recontacté·e par Messenger" />
         </label>
 
         <!-- Piège à robots. Il reste dans l'arbre d'accessibilité : un champ focusable
@@ -70,10 +81,17 @@ import Layout from '../layouts/Layout.astro';
              explicite. tabindex="-1" le garde hors du parcours Tab. -->
         <p class="piege"><label for="site">Laissez ce champ vide</label><input type="text" id="site" name="site" tabindex="-1" autocomplete="off" /></p>
 
-        <!-- Si TURNSTILE_SECRET est activé côté Worker, insérer ici le widget :
-             <div class="cf-turnstile" data-sitekey="…"></div> + le script Cloudflare Turnstile.
-             Sans widget côté client, le Worker rejettera toutes les demandes. -->
-
+        {sitekeyTurnstile && (
+          <>
+            {/* Le script pose lui-même l'input caché `cf-turnstile-response` dans ce
+                formulaire ; `new FormData(form)` le récupère sans code supplémentaire.
+                refresh-expired="auto" : le jeton meurt au bout de 5 min, or rédiger une
+                demande et joindre des photos prend souvent plus longtemps. */}
+            <div class="cf-turnstile" data-sitekey={sitekeyTurnstile}
+                 data-language="fr" data-refresh-expired="auto"></div>
+            <script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
+          </>
+        )}
 
         <p class="message-erreur" id="erreur-globale" role="alert" tabindex="-1" hidden></p>
         <button class="btn btn-primary btn-big envoi" type="submit" id="bouton-envoi">Envoyer ma demande</button>
@@ -126,6 +144,7 @@ import Layout from '../layouts/Layout.astro';
     color: var(--rouge); font-weight: 700; cursor: pointer; line-height: 1;
   }
   .piege { position: absolute; left: -9999px; }
+  .cf-turnstile { margin-top: 26px; }
   .envoi { margin-top: 26px; }
   @media (max-width: 640px) { .envoi { width: 100%; } }
   .rgpd { margin-top: 12px; color: var(--muted); font-size: 0.875rem; }
@@ -315,6 +334,10 @@ import Layout from '../layouts/Layout.astro';
       erreurGlobale.focus();
       boutonEnvoi.disabled = false;
       boutonEnvoi.textContent = 'Envoyer ma demande';
+      // Le jeton anti-spam ne sert qu'une fois. Sans remise à zéro, le second essai
+      // repart avec un jeton déjà consommé et le Worker le refuse : l'internaute
+      // resterait bloqué sur l'erreur sans pouvoir en sortir.
+      (window as unknown as { turnstile?: { reset(): void } }).turnstile?.reset();
     }
   });
 </script>

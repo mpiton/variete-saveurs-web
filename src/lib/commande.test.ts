@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { champsManquants, echapper, photosRetenues, type Champs } from './commande';
+import { champsManquants, echapper, MAX_LONGUEURS, photosRetenues, type Champs } from './commande';
 
 // Horloge figée : les tests ne doivent pas dépendre du jour où on les lance.
 const MAINTENANT = Date.parse('2026-07-29T10:00:00Z');   // donc la première date acceptée est le 2026-07-30
@@ -13,7 +13,10 @@ const valide = (): Champs => ({
   nom: 'Piton',
   telephone: '0516483243',
   email: 'client@example.com',
+  facebook: '',
 });
+
+const long = (n: number) => 'a'.repeat(n);
 
 describe('echapper', () => {
   it('neutralise les cinq caractères HTML', () => {
@@ -35,7 +38,7 @@ describe('champsManquants', () => {
   });
 
   it('liste chaque champ vide', () => {
-    const vide: Champs = { description: '', date: '', remise: '', adresse: '', prenom: '', nom: '', telephone: '', email: '' };
+    const vide: Champs = { description: '', date: '', remise: '', adresse: '', prenom: '', nom: '', telephone: '', email: '', facebook: '' };
     expect(champsManquants(vide, MAINTENANT)).toEqual(['description', 'date', 'remise', 'prenom', 'nom', 'telephone', 'email']);
   });
 
@@ -68,6 +71,36 @@ describe('champsManquants', () => {
     for (const email of ['client', 'client@', '@example.com', 'a b@example.com', 'client@example']) {
       expect(champsManquants({ ...valide(), email }, MAINTENANT), email).toContain('email');
     }
+  });
+});
+
+describe('champsManquants — longueurs', () => {
+  it('accepte un champ pile à la borne', () => {
+    expect(champsManquants({ ...valide(), description: long(MAX_LONGUEURS.description) }, MAINTENANT)).toEqual([]);
+    expect(champsManquants({ ...valide(), facebook: long(MAX_LONGUEURS.facebook) }, MAINTENANT)).toEqual([]);
+  });
+
+  it('refuse un champ au-delà de la borne', () => {
+    expect(champsManquants({ ...valide(), description: long(MAX_LONGUEURS.description + 1) }, MAINTENANT)).toEqual(['description']);
+    expect(champsManquants({ ...valide(), prenom: long(MAX_LONGUEURS.prenom + 1) }, MAINTENANT)).toEqual(['prenom']);
+    expect(champsManquants({ ...valide(), nom: long(MAX_LONGUEURS.nom + 1) }, MAINTENANT)).toEqual(['nom']);
+    expect(champsManquants({ ...valide(), telephone: long(MAX_LONGUEURS.telephone + 1) }, MAINTENANT)).toEqual(['telephone']);
+  });
+
+  it('borne une adresse email de forme valide mais démesurée', () => {
+    const local = MAX_LONGUEURS.email - '@example.com'.length;
+    expect(champsManquants({ ...valide(), email: `${long(local)}@example.com` }, MAINTENANT)).toEqual([]);
+    expect(champsManquants({ ...valide(), email: `${long(local + 1)}@example.com` }, MAINTENANT)).toEqual(['email']);
+  });
+
+  it('borne le Facebook alors même qu\'il est optionnel', () => {
+    expect(champsManquants({ ...valide(), facebook: long(MAX_LONGUEURS.facebook + 1) }, MAINTENANT)).toEqual(['facebook']);
+  });
+
+  it('ne borne l\'adresse qu\'en livraison, là où elle part dans l\'email', () => {
+    const enorme = long(MAX_LONGUEURS.adresse + 1);
+    expect(champsManquants({ ...valide(), remise: 'livraison', adresse: enorme }, MAINTENANT)).toEqual(['adresse']);
+    expect(champsManquants({ ...valide(), remise: 'retrait', adresse: enorme }, MAINTENANT)).toEqual([]);
   });
 });
 

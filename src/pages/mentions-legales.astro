@@ -15,7 +15,8 @@ import Layout from '../layouts/Layout.astro';
         <dt>Directrice de la publication</dt>
         <dd>Aline Piton</dd>
         <dt>Contact</dt>
-        <dd><a href="mailto:contact@variete-de-saveurs.fr">contact@variete-de-saveurs.fr</a> · <a href="tel:+33516483243">05 16 48 32 43</a></dd>
+        {/* email_off : voir contact.astro — évite la réécriture Cloudflare en /cdn-cgi/l/… */}
+        <dd><!--email_off--><a href="mailto:contact@variete-de-saveurs.fr">contact@variete-de-saveurs.fr</a><!--/email_off--> · <a href="tel:+33516483243">05 16 48 32 43</a></dd>
         <dt>Hébergement</dt>
         <dd>Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, États-Unis.
         Téléphone&nbsp;: +1 888 993 5273.</dd>

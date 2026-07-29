@@ -26,12 +26,19 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
 
   if (env.TURNSTILE_SECRET) {
     const token = String(donnees.get('cf-turnstile-response') ?? '');
-    const verif = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token }),
-    }).then((r) => r.json() as Promise<{ success: boolean }>);
-    if (!verif.success) return Response.json({ ok: false, erreur: 'anti-spam' }, { status: 403 });
+    let succes = false;
+    try {
+      const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token }),
+        signal: AbortSignal.timeout(5000),
+      });
+      succes = r.ok && ((await r.json()) as { success: boolean }).success;
+    } catch (e) {
+      console.error('turnstile', e);   // réseau, timeout, réponse non-JSON : on refuse
+    }
+    if (!succes) return Response.json({ ok: false, erreur: 'anti-spam' }, { status: 403 });
   }
 
   const champ = (nom: string) => String(donnees.get(nom) ?? '').trim();
@@ -47,7 +54,11 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
 
   const manquants: string[] = [];
   if (!description) manquants.push('description');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) manquants.push('date');
+  // Le round-trip ISO rejette le mauvais format ET les dates impossibles (2026-02-31, 2026-13-40).
+  // Le client pose date.min=demain ; un POST direct ne passe pas par le formulaire.
+  const jour = new Date(`${date}T12:00:00Z`);
+  const demain = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  if (Number.isNaN(jour.getTime()) || !jour.toISOString().startsWith(date) || date < demain) manquants.push('date');
   if (remise !== 'retrait' && remise !== 'livraison') manquants.push('remise');
   if (remise === 'livraison' && !adresse) manquants.push('adresse');
   if (!prenom) manquants.push('prenom');
@@ -61,6 +72,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   let total = 0;
   for (const entree of donnees.getAll('photos')) {
     if (!(entree instanceof File) || attachments.length >= MAX_PHOTOS) continue;
+    if (!entree.type.startsWith('image/')) continue;   // le client filtre déjà, un POST direct non
     if (entree.size === 0 || entree.size > MAX_PHOTO_OCTETS) continue;
     total += entree.size;
     if (total > MAX_TOTAL_OCTETS) break;
@@ -92,22 +104,27 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
       <p style="font-family:sans-serif;font-size:14px;white-space:pre-wrap">${echapper(description)}</p>
     </div>`;
 
-  const envoi = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'api-key': env.BREVO_API_KEY, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      sender: { email: env.SENDER_EMAIL, name: 'variete-de-saveurs.fr' },
-      to: [{ email: env.ORDER_EMAIL }],
-      replyTo: { email, name: `${prenom} ${nom}` },
-      subject: `Demande de commande — ${prenom} ${nom} — ${dateFr}`,
-      htmlContent: html,
-      ...(attachments.length ? { attachment: attachments } : {}),
-    }),
-  });
-
-  if (!envoi.ok) {
-    console.error('brevo', envoi.status, await envoi.text());
-    return Response.json({ ok: false, erreur: 'envoi' }, { status: 502 });
+  let envoye = false;
+  try {
+    const envoi = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': env.BREVO_API_KEY, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sender: { email: env.SENDER_EMAIL, name: 'variete-de-saveurs.fr' },
+        to: [{ email: env.ORDER_EMAIL }],
+        replyTo: { email, name: `${prenom} ${nom}` },
+        subject: `Demande de commande — ${prenom} ${nom} — ${dateFr}`,
+        htmlContent: html,
+        ...(attachments.length ? { attachment: attachments } : {}),
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    envoye = envoi.ok;
+    if (!envoi.ok) console.error('brevo', envoi.status, await envoi.text());
+  } catch (e) {
+    console.error('brevo', e);   // réseau ou timeout : même 502 que sur réponse en erreur
   }
+
+  if (!envoye) return Response.json({ ok: false, erreur: 'envoi' }, { status: 502 });
   return Response.json({ ok: true });
 };

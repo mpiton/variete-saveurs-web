@@ -265,6 +265,7 @@ figure { margin: 0; }
 /* ============ Bande finale (peak-end) ============ */
 .finale {
   --focus-ring: var(--or-vif);
+
   position: relative;
   background: var(--nuit);
   color: var(--creme);

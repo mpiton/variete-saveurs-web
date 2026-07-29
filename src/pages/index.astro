@@ -8,24 +8,13 @@ import archeEvenement from '../assets/generated/gen-arche-evenement.png';
 import archeDouceurs from '../assets/generated/gen-arche-douceurs.png';
 import buffet from '../assets/generated/gen-buffet.png';
 import partFraisier from '../assets/generated/gen-part-fraisier.png';
-import { parse } from 'yaml';
-import carteRaw from '../data/carte.yaml?raw';
+import CarteGroupe from '../components/CarteGroupe.astro';
+import { carte } from '../lib/carte';
 
-type Produit = { nom: string; prix: string; unite?: string };
-type Groupe = { nom: string; produits: Produit[] };
-const carte = parse(carteRaw) as { groupes: Groupe[] };
 // L'extrait tease 4 gâteaux + les deux derniers groupes (petites pâtisseries,
 // pièces d'événement) : l'entrée de gamme et le haut de gamme promis par le hero.
 const premier = carte.groupes[0]!;
 const extrait = [{ nom: premier.nom, produits: premier.produits.slice(0, 4) }, ...carte.groupes.slice(-2)];
-
-// « 28 € » → montant seul ; « à partir de 60 € » → préfixe en petit ; « sur devis » → pastille
-function decouperPrix(prix: string): { tag: boolean; prefixe?: string; montant: string } {
-  if (prix.toLowerCase() === 'sur devis') return { tag: true, montant: prix };
-  const m = prix.match(/^(à partir de)\s+(.+)$/i);
-  if (m) return { tag: false, prefixe: m[1], montant: m[2]! };
-  return { tag: false, montant: prix };
-}
 
 // SEO local : données structurées (ARCHI §6)
 const localBusiness = {
@@ -135,32 +124,7 @@ const localBusiness = {
       <h2 class="section-title" id="carte-title" data-reveal>La carte</h2>
 
       <div class="carte-panel" data-reveal>
-        {extrait.map((groupe) => (
-          <div class="carte-group">
-            <h3>{groupe.nom}</h3>
-            <ul>
-              {groupe.produits.map((p) => {
-                const prix = decouperPrix(p.prix);
-                return (
-                  <li class="carte-row">
-                    <div class="row-main">
-                      <span class="row-name">{p.nom}</span>
-                      {p.unite && <span class="row-meta">{p.unite}</span>}
-                    </div>
-                    <span class="row-price">
-                      {prix.tag
-                        ? <span class="tag-devis">sur devis</span>
-                        : prix.prefixe
-                          ? <Fragment><small>{prix.prefixe}</small>{prix.montant}</Fragment>
-                          : prix.montant}
-                    </span>
-                    <a class="row-cta" href={`/commander/?produit=${encodeURIComponent(p.nom)}`} aria-label={`Commander : ${p.nom}`}>Commander</a>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+        {extrait.map((groupe) => <CarteGroupe groupe={groupe} niveau="h3" />)}
       </div>
 
       <div class="carte-more" data-reveal>

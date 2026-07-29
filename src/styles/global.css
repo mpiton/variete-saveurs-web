@@ -17,6 +17,10 @@
   --ink: #3A2318;
   --muted: #6B5A4E;
   --bord: #ECE3CF;
+  /* Le contour d'un champ de saisie porte une information — où l'on peut écrire —
+     là où --bord n'est que décor. WCAG 1.4.11 demande 3:1 pour la limite d'un
+     composant : 4,06:1 sur blanc, 3,77:1 sur jour. */
+  --bord-champ: #8C7B6D;
   --filet: #F3E9DC;
   --surface-dim: #EFE6D8;
   /* Sémantique : voisin du rouge enseigne — l'erreur se signale par bordure + message */
@@ -254,7 +258,7 @@ figure { margin: 0; }
 .champ > span { display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; }
 .champ input, .champ textarea, .champ select {
   width: 100%; background: var(--blanc); color: var(--ink);
-  border: 2px solid var(--bord); border-radius: 12px;
+  border: 2px solid var(--bord-champ); border-radius: 12px;
   padding: 12px 14px; font: 400 1rem var(--font-body);
 }
 .champ input:focus, .champ textarea:focus, .champ select:focus { border-color: var(--or); }

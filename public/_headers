@@ -9,9 +9,12 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
-  # 'unsafe-inline' sur script-src : Astro émet un <script type="module"> inline et
-  # l'hébergement statique ne permet pas de nonce. Les autres directives font le travail.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+  # La politique vit désormais dans astro.config.mjs (`security.csp`) : Astro empreinte
+  # ses scripts et ses styles au build, ce qui remplace le 'unsafe-inline' d'avant.
+  # Elle sort en <meta http-equiv> ; frame-ancestors y étant ignoré, il reste ici.
+  # Deux politiques s'appliquent par intersection, donc rien d'autre ne doit y figurer :
+  # une directive répétée ici ne pourrait que restreindre celle du meta, jamais l'élargir.
+  Content-Security-Policy: frame-ancestors 'none'
 
 # Noms de fichiers hachés par Astro : le contenu ne change jamais sous une même URL.
 /_astro/*

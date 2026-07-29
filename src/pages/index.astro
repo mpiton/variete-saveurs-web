@@ -22,6 +22,12 @@ const localBusiness = {
   '@type': 'Bakery',
   name: 'Variété de Saveurs',
   description: "Pâtisserie artisanale sur commande : entremets, macarons, buffets et pièces d'événement.",
+  url: Astro.site!.href,
+  // Google veut une URL absolue ici ; une relative est ignorée en silence.
+  image: new URL('/og-image.png', Astro.site).href,
+  // Le symbole seul, et non une fourchette : la carte va de 0,70 € à 6 €, mais les
+  // pièces d'événement sont sur devis — un intervalle chiffré mentirait.
+  priceRange: '€',
   telephone: '+33516483243',
   email: 'contact@variete-de-saveurs.fr',
   address: {

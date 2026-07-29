@@ -155,6 +155,9 @@ const grands = await Promise.all(
                 data-largeur={grands[i]!.attributes.width}
                 data-hauteur={grands[i]!.attributes.height}
               >
+                {/* La grille tombe à deux colonnes sur mobile : au-delà de la
+                    troisième vignette, charger d'avance revient à réclamer ce qui
+                    est sous la ligne de flottaison au détriment de la première image. */}
                 <Image
                   src={p.src}
                   alt={legende(p.slug)}
@@ -162,7 +165,7 @@ const grands = await Promise.all(
                   widths={[380, 760]}
                   sizes="(max-width: 559px) 46vw, (max-width: 899px) 45vw, 30vw"
                   format="webp"
-                  loading={i < 6 ? 'eager' : 'lazy'}
+                  loading={i < 3 ? 'eager' : 'lazy'}
                   fetchpriority={i === 0 ? 'high' : undefined}
                 />
               </button>
@@ -173,7 +176,9 @@ const grands = await Promise.all(
 
       <dialog id="zoom" aria-label="Photo agrandie">
         <img id="zoom-img" alt="" />
-        <p id="zoom-legende"></p>
+        {/* La légende reprend mot pour mot l'alt de l'image : masquée aux
+            technologies d'assistance, elle serait annoncée deux fois. */}
+        <p id="zoom-legende" aria-hidden="true"></p>
         <button type="button" class="zoom-btn zoom-prec" data-pas="-1" aria-label="Photo précédente">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>

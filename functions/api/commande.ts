@@ -48,7 +48,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   const facebook = champ('facebook');
 
   const manquants = champsManquants(
-    { description, date, remise, adresse, prenom, nom, telephone, email },
+    { description, date, remise, adresse, prenom, nom, telephone, email, facebook },
     Date.now(),
   );
   if (manquants.length) return Response.json({ ok: false, erreur: 'champs', manquants }, { status: 400 });

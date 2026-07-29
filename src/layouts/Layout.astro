@@ -2,6 +2,12 @@
 import { Image } from 'astro:assets';
 import '@fontsource-variable/bricolage-grotesque';
 import '@fontsource-variable/work-sans';
+// Importés pour leur URL empreintée, afin de les précharger : sans cela le
+// navigateur ne découvre les woff2 qu'après avoir analysé la feuille de style,
+// soit un aller-retour de plus avant le premier texte à la bonne fonte.
+// Seul le sous-ensemble latin est préchargé, le seul que le site utilise.
+import bricolageWoff2 from '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2?url';
+import workSansWoff2 from '@fontsource-variable/work-sans/files/work-sans-latin-wght-normal.woff2?url';
 import '../styles/global.css';
 import logo from '../assets/logo.png';
 import devanture from '../assets/generated/gen-devanture.png';
@@ -23,6 +29,11 @@ const og = new URL('/og-image.png', Astro.site);
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{titre}</title>
   <meta name="description" content={description} />
+  {/* crossorigin est obligatoire même en same-origin : une fonte est toujours
+      récupérée en mode CORS, et sans l'attribut le préchargement est jeté puis
+      refait — deux téléchargements au lieu d'un. */}
+  <link rel="preload" as="font" type="font/woff2" href={bricolageWoff2} crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href={workSansWoff2} crossorigin />
   {noindex
     ? <meta name="robots" content="noindex, follow" />
     : <link rel="canonical" href={canonical} />}
@@ -32,8 +43,16 @@ const og = new URL('/og-image.png', Astro.site);
   <meta property="og:title" content={titre} />
   <meta property="og:description" content={description} />
   <meta property="og:image" content={og} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Variété de Saveurs — pâtisserie artisanale à Montendre" />
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="fr_FR" />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:site_name" content="Variété de Saveurs" />
+  {/* Sans cette ligne, X rend une vignette carrée et rogne la pièce montée. */}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="theme-color" content="#310D14" />
 </head>
 <body>
   <a class="evitement" href="#contenu">Aller au contenu</a>

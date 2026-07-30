@@ -8,8 +8,11 @@ import { describe, expect, it } from 'vitest';
 // ce silence qui a laissé passer des légendes fausses jusqu'en production.
 // On lit donc la source plutôt que d'importer, LEGENDES vivant dans le
 // frontmatter d'un .astro.
-const RACINE = new URL('../assets/galerie', import.meta.url).pathname;
-const source = readFileSync(new URL('./galerie.astro', import.meta.url).pathname, 'utf8');
+//
+// Ce fichier vit hors de src/pages/ : Astro route tout ce qui s'y trouve, un
+// test posé là devient une page et casse le build.
+const RACINE = new URL('../src/assets/galerie', import.meta.url).pathname;
+const source = readFileSync(new URL('../src/pages/galerie.astro', import.meta.url).pathname, 'utf8');
 
 const legendes = (): string[] => {
   const bloc = source.match(/const LEGENDES: Record<string, string> = \{([\s\S]*?)\n\};/);

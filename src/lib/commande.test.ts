@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { champsManquants, echapper, MAX_LONGUEURS, photosRetenues, type Champs } from './commande';
+import { champsManquants, echapper, formatImage, MAX_LONGUEURS, photosRetenues, type Champs } from './commande';
 
 // Horloge figée : les tests ne doivent pas dépendre du jour où on les lance.
 const MAINTENANT = Date.parse('2026-07-29T10:00:00Z');   // donc la première date acceptée est le 2026-07-30
@@ -134,5 +134,30 @@ describe('photosRetenues', () => {
   it('ne compte pas les fichiers écartés dans le cumul', () => {
     const gardees = photosRetenues([photo(4 * 1024 * 1024), photo(1000), photo(1000)]);
     expect(gardees).toHaveLength(2);
+  });
+});
+
+describe('formatImage', () => {
+  const octets = (...valeurs: number[]) => new Uint8Array(valeurs);
+  const JPEG = octets(0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46);
+  const PNG = octets(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d);
+  const WEBP = octets(0x52, 0x49, 0x46, 0x46, 0x24, 0, 0, 0, 0x57, 0x45, 0x42, 0x50);
+
+  it('reconnaît les trois formats que produit la compression navigateur', () => {
+    expect(formatImage(JPEG)).toBe('jpg');
+    expect(formatImage(PNG)).toBe('png');
+    expect(formatImage(WEBP)).toBe('webp');
+  });
+
+  it('démasque un fichier piégé déclaré image/*', () => {
+    const svg = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+    expect(formatImage(svg)).toBeNull();
+    expect(formatImage(octets(0x4d, 0x5a, 0x90, 0, 3, 0, 0, 0))).toBeNull();   // exécutable PE (« MZ »)
+  });
+
+  it('rejette un fichier vide ou tronqué avant la signature', () => {
+    expect(formatImage(octets())).toBeNull();
+    expect(formatImage(octets(0xff, 0xd8))).toBeNull();
+    expect(formatImage(octets(0x52, 0x49, 0x46, 0x46))).toBeNull();   // « RIFF » sans « WEBP »
   });
 });

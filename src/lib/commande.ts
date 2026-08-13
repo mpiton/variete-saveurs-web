@@ -73,3 +73,20 @@ export const photosRetenues = <T extends { type: string; size: number }>(fichier
   }
   return gardees;
 };
+
+/**
+ * Le format réel d'une image, lu dans ses premiers octets — le `type` MIME d'un
+ * POST est déclaré par le client et ne vaut rien : sans cette vérification, un
+ * SVG piégé ou un exécutable renommé partirait en pièce jointe vers la boîte
+ * pro. Renvoie l'extension à imposer côté serveur, ou null si le contenu
+ * n'est ni JPEG, ni PNG, ni WebP (ce que produit la compression du navigateur).
+ */
+export const formatImage = (octets: Uint8Array): 'jpg' | 'png' | 'webp' | null => {
+  if (octets.length >= 3 && octets[0] === 0xff && octets[1] === 0xd8 && octets[2] === 0xff) return 'jpg';
+  const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (octets.length >= PNG.length && PNG.every((b, i) => octets[i] === b)) return 'png';
+  const est = (decalage: number, s: string) =>
+    octets.length >= decalage + 4 && [...s].every((c, i) => octets[decalage + i] === c.charCodeAt(0));
+  if (est(0, 'RIFF') && est(8, 'WEBP')) return 'webp';
+  return null;
+};

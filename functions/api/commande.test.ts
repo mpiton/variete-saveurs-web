@@ -10,8 +10,16 @@ const ENV = {
   // pas de TURNSTILE_SECRET : la vérification anti-spam est hors de ce test
 };
 
-const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1, 2, 3]);
-const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d, 1, 2]);
+// Images minimales structurellement complètes : segments JPEG + EOI final,
+// chunks PNG jusqu'à IEND final — un préfixe de signature ne suffit plus.
+const JPEG = new Uint8Array([
+  0xff, 0xd8, 0xff, 0xda, 0x00, 0x08, 1, 1, 0, 0, 0x3f, 0, 0x2a, 0xff, 0xd9,
+]);
+const PNG = new Uint8Array([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52, ...new Uint8Array(13), 0, 0, 0, 0,
+  0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+]);
 const SVG_PIÈGE = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
 
 const requete = (photos: File[], corps?: (fd: FormData) => void) => {
@@ -68,5 +76,14 @@ describe('onRequestPost', () => {
     expect(res.status).toBe(200);
     const corps = await appelBrevo();
     expect(corps.attachment?.map((a) => a.name)).toEqual(['photo-1.png', 'photo-2.jpg']);
+  });
+
+  it('se fie au contenu, pas au MIME déclaré : une vraie image en octet-stream est jointe', async () => {
+    brevo.mockResolvedValue(new Response('{}', { status: 201 }));
+    const sansType = new File([PNG], 'scan', { type: 'application/octet-stream' });
+    const res = await onRequestPost({ request: requete([sansType]), env: ENV });
+    expect(res.status).toBe(200);
+    const corps = await appelBrevo();
+    expect(corps.attachment?.map((a) => a.name)).toEqual(['photo-1.png']);
   });
 });

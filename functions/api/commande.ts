@@ -1,7 +1,7 @@
 // Fonction Cloudflare Pages : POST /api/commande
 // Valide la demande, transforme en email Brevo vers l'adresse pro. Aucun stockage (ADR 0002).
 
-import { champsManquants, echapper, formatImage, photosRetenues } from '../../src/lib/commande';
+import { champsManquants, echapper, photosValides } from '../../src/lib/commande';
 
 interface Env {
   BREVO_API_KEY: string;      // secret Worker — jamais dans le repo
@@ -59,15 +59,12 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   );
   if (manquants.length) return Response.json({ ok: false, erreur: 'champs', manquants }, { status: 400 });
 
-  // Photos → pièces jointes base64. Le contenu est relu (magic bytes) : un MIME
-  // « image/* » se déclare à la main, la signature binaire non. Le nom est imposé
-  // côté serveur — celui du POST pourrait être « facture.svg » ou « photo.html ».
+  // Photos → pièces jointes base64. Seul le contenu compte : le MIME déclaré est
+  // ignoré, la structure binaire est validée avant tout quota, et le nom est
+  // imposé côté serveur — celui du POST pourrait être « facture.svg ».
   const fichiers = donnees.getAll('photos').filter((e): e is File => e instanceof File);
   const attachments: { name: string; content: string }[] = [];
-  for (const entree of photosRetenues(fichiers)) {
-    const octets = new Uint8Array(await entree.arrayBuffer());
-    const format = formatImage(octets);
-    if (!format) continue;
+  for (const { octets, format } of await photosValides(fichiers)) {
     let bin = '';
     for (let i = 0; i < octets.length; i += 0x8000) {
       bin += String.fromCharCode(...octets.subarray(i, i + 0x8000));

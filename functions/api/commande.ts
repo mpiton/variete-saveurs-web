@@ -1,7 +1,7 @@
 // Fonction Cloudflare Pages : POST /api/commande
 // Valide la demande, transforme en email Brevo vers l'adresse pro. Aucun stockage (ADR 0002).
 
-import { champsManquants, echapper, photosRetenues } from '../../src/lib/commande';
+import { champsManquants, echapper, photosValides } from '../../src/lib/commande';
 
 interface Env {
   BREVO_API_KEY: string;      // secret Worker — jamais dans le repo
@@ -12,7 +12,13 @@ interface Env {
 
 export const onRequestPost = async (context: { request: Request; env: Env }): Promise<Response> => {
   const { request, env } = context;
-  const donnees = await request.formData();
+  // Un corps vide ou malformé fait lever formData() : on répond 400 plutôt que 500.
+  let donnees: FormData;
+  try {
+    donnees = await request.formData();
+  } catch {
+    return Response.json({ ok: false, erreur: 'lecture' }, { status: 400 });
+  }
 
   // Honeypot : on répond « ok » sans rien envoyer
   if (String(donnees.get('site') ?? '') !== '') {
@@ -53,16 +59,18 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   );
   if (manquants.length) return Response.json({ ok: false, erreur: 'champs', manquants }, { status: 400 });
 
-  // Photos → pièces jointes base64
+  // Photos → pièces jointes base64. Seul le contenu compte : le MIME déclaré est
+  // ignoré, la structure binaire est validée avant les quotas de slots et de
+  // cumul, et le nom est imposé côté serveur — celui du POST pourrait être
+  // « facture.svg ».
   const fichiers = donnees.getAll('photos').filter((e): e is File => e instanceof File);
   const attachments: { name: string; content: string }[] = [];
-  for (const entree of photosRetenues(fichiers)) {
-    const octets = new Uint8Array(await entree.arrayBuffer());
+  for (const { octets, format } of await photosValides(fichiers)) {
     let bin = '';
     for (let i = 0; i < octets.length; i += 0x8000) {
       bin += String.fromCharCode(...octets.subarray(i, i + 0x8000));
     }
-    attachments.push({ name: entree.name || `photo-${attachments.length + 1}.jpg`, content: btoa(bin) });
+    attachments.push({ name: `photo-${attachments.length + 1}.${format}`, content: btoa(bin) });
   }
 
   const dateFr = new Date(`${date}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });

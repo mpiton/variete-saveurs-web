@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { champsManquants, echapper, MAX_LONGUEURS, photosRetenues, type Champs } from './commande';
+import { champsManquants, echapper, formatImage, MAX_LONGUEURS, photosValides, type Champs } from './commande';
 
 // Horloge figée : les tests ne doivent pas dépendre du jour où on les lance.
 const MAINTENANT = Date.parse('2026-07-29T10:00:00Z');   // donc la première date acceptée est le 2026-07-30
@@ -104,35 +104,168 @@ describe('champsManquants — longueurs', () => {
   });
 });
 
-describe('photosRetenues', () => {
-  const photo = (size: number, type = 'image/jpeg') => ({ type, size });
+// Images minimales mais structurellement complètes — un simple préfixe de
+// signature ne passe plus, il faut le conteneur entier : segments JPEG avec
+// DHT et SOF0 avant le SOS, entropy stream jusqu'à l'EOI final ; chunks PNG
+// au CRC exact jusqu'à l'IEND final ; chunks WebP à la taille RIFF exacte.
+const JPEG_VALIDE = new Uint8Array([
+  0xff, 0xd8,                                          // SOI
+  0xff, 0xe0, 0x00, 0x10, ...new Uint8Array(14),       // APP0 (segment de 16 octets)
+  0xff, 0xc4, 0x00, 0x14, ...new Uint8Array(18),       // DHT (segment de 20 octets)
+  0xff, 0xc0, 0x00, 0x0b, ...new Uint8Array(9),        // SOF0 (segment de 11 octets)
+  0xff, 0xda, 0x00, 0x08, ...new Uint8Array(6),        // SOS (8 octets) → données compressées
+  0x2a, 0x17, 0xff, 0x00, 0x33,                        // entropy stream (dont un FF échappé)
+  0xff, 0xd9,                                          // EOI
+]);
+const PNG_VALIDE = new Uint8Array([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,      // IHDR, 13 octets
+  0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0,
+  0x1f, 0x15, 0xc4, 0x89,                              // CRC IHDR
+  0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54,      // IDAT, 10 octets
+  0x78, 0x01, 0x63, 0x60, 0, 0, 0, 2, 0, 1,
+  0x73, 0x75, 0x01, 0x18,                              // CRC IDAT
+  0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,   // IEND + CRC
+]);
+const WEBP_VALIDE = new Uint8Array([
+  0x52, 0x49, 0x46, 0x46, 0x10, 0x00, 0x00, 0x00,      // « RIFF », taille déclarée 16 = total - 8
+  0x57, 0x45, 0x42, 0x50,                              // « WEBP »
+  0x56, 0x50, 0x38, 0x20, 0x04, 0x00, 0x00, 0x00, ...new Uint8Array(4),   // « VP8 » + données
+]);
 
-  it('garde les photos conformes', () => {
-    const f = [photo(500_000), photo(800_000)];
-    expect(photosRetenues(f)).toEqual(f);
+const jpegDe = (taille: number) => {
+  const entete = [
+    0xff, 0xd8,
+    0xff, 0xc4, 0x00, 0x14, ...new Uint8Array(18),
+    0xff, 0xc0, 0x00, 0x0b, ...new Uint8Array(9),
+    0xff, 0xda, 0x00, 0x08, ...new Uint8Array(6),      // SOI + DHT + SOF0 + SOS
+  ];
+  return new Uint8Array([...entete, ...new Uint8Array(taille - entete.length - 2), 0xff, 0xd9]);
+};
+const concat = (a: Uint8Array | number[], b: number[]) => new Uint8Array([...a, ...b]);
+
+describe('formatImage', () => {
+  it('reconnaît les trois formats que produit la compression navigateur', () => {
+    expect(formatImage(JPEG_VALIDE)).toBe('jpg');
+    expect(formatImage(PNG_VALIDE)).toBe('png');
+    expect(formatImage(WEBP_VALIDE)).toBe('webp');
   });
 
-  it('écarte ce qui n\'est pas une image', () => {
-    expect(photosRetenues([photo(1000, 'application/pdf'), photo(1000, 'text/html')])).toEqual([]);
+  it('rejette les charges qui ne font qu\'imiter une signature', () => {
+    expect(formatImage(new Uint8Array([0xff, 0xd8, 0xff]))).toBeNull();                      // préfixe JPEG seul
+    expect(formatImage(concat([0xff, 0xd8, 0xff], [0x3c, 0x73, 0x63, 0x72]))).toBeNull();    // préfixe + charge
+    expect(formatImage(PNG_VALIDE.slice(0, 8))).toBeNull();                                  // signature PNG seule
+    expect(formatImage(WEBP_VALIDE.slice(0, 12))).toBeNull();                                // « RIFF....WEBP » seul
   });
 
-  it('écarte une photo vide ou au-dessus du plafond unitaire', () => {
-    expect(photosRetenues([photo(0)])).toEqual([]);
-    expect(photosRetenues([photo(3 * 1024 * 1024 + 1)])).toEqual([]);
-    expect(photosRetenues([photo(3 * 1024 * 1024)])).toHaveLength(1);   // la borne exacte passe
+  it('exige la fin du format en fin de fichier : rien ne peut être ajouté derrière', () => {
+    expect(formatImage(JPEG_VALIDE.slice(0, -2))).toBeNull();                // JPEG sans EOI
+    expect(formatImage(concat(JPEG_VALIDE, [0x3c, 0x73]))).toBeNull();       // octets après l'EOI
+    expect(formatImage(PNG_VALIDE.slice(0, -12))).toBeNull();                // PNG sans IEND
+    expect(formatImage(concat(PNG_VALIDE, [0x3c, 0x73]))).toBeNull();        // octets après l'IEND
+    const webpGonfle = concat(WEBP_VALIDE, [0, 0]);
+    expect(formatImage(webpGonfle)).toBeNull();                              // taille RIFF fausse
   });
 
-  it('plafonne à trois photos', () => {
-    expect(photosRetenues([photo(1000), photo(1000), photo(1000), photo(1000)])).toHaveLength(3);
+  it('démasque un fichier piégé déclaré image/*', () => {
+    const svg = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+    expect(formatImage(svg)).toBeNull();
+    expect(formatImage(new Uint8Array([0x4d, 0x5a, 0x90, 0, 3, 0, 0, 0]))).toBeNull();   // exécutable PE (« MZ »)
   });
 
-  it('coupe la série quand le cumul dépasse la limite Brevo', () => {
-    const gros = 3 * 1024 * 1024;                       // 3 Mo chacun, la 3e ferait 9 Mo
-    expect(photosRetenues([photo(gros), photo(gros), photo(gros)])).toHaveLength(2);
+  it('rejette un JPEG sans cadre SOF ni table de Huffman, et un entropy stream mal formé', () => {
+    const sansSof = new Uint8Array([
+      0xff, 0xd8, 0xff, 0xc4, 0x00, 0x14, ...new Uint8Array(18),
+      0xff, 0xda, 0x00, 0x08, ...new Uint8Array(6), 0x2a, 0xff, 0xd9,
+    ]);
+    expect(formatImage(sansSof)).toBeNull();
+    const marqueurInconnu = new Uint8Array([...JPEG_VALIDE.slice(0, -2), 0xff, 0xc0, 0xff, 0xd9]);
+    expect(formatImage(marqueurInconnu)).toBeNull();   // marqueur inattendu dans le scan
   });
 
-  it('ne compte pas les fichiers écartés dans le cumul', () => {
-    const gardees = photosRetenues([photo(4 * 1024 * 1024), photo(1000), photo(1000)]);
-    expect(gardees).toHaveLength(2);
+  it('rejette un JPEG sans le moindre scan : EOI ne suffit pas', () => {
+    expect(formatImage(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]))).toBeNull();   // SOI + EOI
+    const segmentsSansScan = new Uint8Array([
+      0xff, 0xd8, 0xff, 0xc4, 0x00, 0x14, ...new Uint8Array(18),
+      0xff, 0xc0, 0x00, 0x0b, ...new Uint8Array(9), 0xff, 0xd9,               // DHT + SOF0 + EOI, jamais de SOS
+    ]);
+    expect(formatImage(segmentsSansScan)).toBeNull();
+  });
+
+  it('vérifie le CRC de chaque chunk PNG et exige un IDAT', () => {
+    const corrompu = new Uint8Array(PNG_VALIDE);
+    corrompu[20]! ^= 0xff;                             // un octet d'IHDR modifié, CRC inchangé
+    expect(formatImage(corrompu)).toBeNull();
+    const sansIdat = new Uint8Array([...PNG_VALIDE.slice(0, 33), ...PNG_VALIDE.slice(55)]);
+    expect(formatImage(sansIdat)).toBeNull();          // IHDR + IEND, jamais de données
+  });
+
+  it('rejette un IEND porteur d\'une charge, même avec un CRC exact', () => {
+    const iendCharge = new Uint8Array([
+      ...PNG_VALIDE.slice(0, 55),                      // signature + IHDR + IDAT
+      0x00, 0x00, 0x00, 0x04, 0x49, 0x45, 0x4e, 0x44,  // « IEND » de 4 octets (!)
+      1, 2, 3, 4, 0x4a, 0x9a, 0xed, 0x35,              // charge + CRC exact
+    ]);
+    expect(formatImage(iendCharge)).toBeNull();
+  });
+
+  it('rejette un WebP sans chunk image et un chunk tronqué', () => {
+    const vp8xSeul = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x12, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+      0x56, 0x50, 0x38, 0x58, 0x02, 0x00, 0x00, 0x00, 0, 0,   // « VP8X » seul
+    ]);
+    expect(formatImage(vp8xSeul)).toBeNull();
+    expect(formatImage(WEBP_VALIDE.slice(0, 22))).toBeNull();   // chunk VP8 tronqué
+  });
+
+  it('rejette un fichier vide ou tronqué avant la signature', () => {
+    expect(formatImage(new Uint8Array())).toBeNull();
+    expect(formatImage(new Uint8Array([0xff, 0xd8]))).toBeNull();
+  });
+});
+
+describe('photosValides', () => {
+  const fichier = (octets: Uint8Array, type = 'image/jpeg') => new File([new Uint8Array(octets)], 'photo', { type });
+
+  it('garde les photos valides, avec leur format lu dans le contenu', async () => {
+    const gardees = await photosValides([fichier(JPEG_VALIDE), fichier(PNG_VALIDE, 'image/png')]);
+    expect(gardees.map((p) => p.format)).toEqual(['jpg', 'png']);
+  });
+
+  it('ignore le MIME déclaré : une vraie image en application/octet-stream est gardée', async () => {
+    const gardees = await photosValides([fichier(PNG_VALIDE, 'application/octet-stream'), fichier(JPEG_VALIDE, '')]);
+    expect(gardees.map((p) => p.format)).toEqual(['png', 'jpg']);
+  });
+
+  it('écarte un fichier piégé déclaré image/*', async () => {
+    const svg = new TextEncoder().encode('<svg><script>alert(1)</script></svg>');
+    expect(await photosValides([fichier(svg)])).toEqual([]);
+  });
+
+  it('un fichier invalide ne consomme ni slot ni budget : la photo valide derrière passe', async () => {
+    const svg = new TextEncoder().encode('<svg><script>alert(1)</script></svg>');
+    const pieces = [fichier(svg), fichier(svg), fichier(svg), fichier(PNG_VALIDE, 'image/png')];
+    const gardees = await photosValides(pieces);
+    expect(gardees.map((p) => p.format)).toEqual(['png']);
+  });
+
+  it('écarte une photo vide ou au-dessus du plafond unitaire', async () => {
+    expect(await photosValides([fichier(new Uint8Array())])).toEqual([]);
+    expect(await photosValides([fichier(new Uint8Array(3 * 1024 * 1024 + 1))])).toEqual([]);
+  });
+
+  it('plafonne à trois photos valides', async () => {
+    const pieces = [JPEG_VALIDE, JPEG_VALIDE, JPEG_VALIDE, JPEG_VALIDE].map((o) => fichier(o));
+    expect(await photosValides(pieces)).toHaveLength(3);
+  });
+
+  it('coupe la série quand le cumul dépasse la limite Brevo', async () => {
+    const gros = () => fichier(jpegDe(3 * 1024 * 1024));   // 3 Mo chacun, la 3e ferait 9 Mo
+    expect(await photosValides([gros(), gros(), gros()])).toHaveLength(2);
+  });
+
+  it('ne compte pas les fichiers écartés dans le cumul', async () => {
+    const pieces = [fichier(new Uint8Array(4 * 1024 * 1024)), fichier(JPEG_VALIDE), fichier(JPEG_VALIDE)];
+    expect(await photosValides(pieces)).toHaveLength(2);
   });
 });

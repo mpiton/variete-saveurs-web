@@ -60,8 +60,9 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   if (manquants.length) return Response.json({ ok: false, erreur: 'champs', manquants }, { status: 400 });
 
   // Photos → pièces jointes base64. Seul le contenu compte : le MIME déclaré est
-  // ignoré, la structure binaire est validée avant tout quota, et le nom est
-  // imposé côté serveur — celui du POST pourrait être « facture.svg ».
+  // ignoré, la structure binaire est validée avant les quotas de slots et de
+  // cumul, et le nom est imposé côté serveur — celui du POST pourrait être
+  // « facture.svg ».
   const fichiers = donnees.getAll('photos').filter((e): e is File => e instanceof File);
   const attachments: { name: string; content: string }[] = [];
   for (const { octets, format } of await photosValides(fichiers)) {

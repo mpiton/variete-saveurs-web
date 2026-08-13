@@ -105,19 +105,27 @@ describe('champsManquants — longueurs', () => {
 });
 
 // Images minimales mais structurellement complètes — un simple préfixe de
-// signature ne passe plus, il faut le conteneur entier (segments JPEG jusqu'au
-// SOS + EOI final, chunks PNG jusqu'à IEND final, taille RIFF exacte).
+// signature ne passe plus, il faut le conteneur entier : segments JPEG avec
+// DHT et SOF0 avant le SOS, entropy stream jusqu'à l'EOI final ; chunks PNG
+// au CRC exact jusqu'à l'IEND final ; chunks WebP à la taille RIFF exacte.
 const JPEG_VALIDE = new Uint8Array([
   0xff, 0xd8,                                          // SOI
-  0xff, 0xe0, 0x00, 0x10, ...new Uint8Array(14),       // segment APP0 (16 octets)
+  0xff, 0xe0, 0x00, 0x10, ...new Uint8Array(14),       // APP0 (segment de 16 octets)
+  0xff, 0xc4, 0x00, 0x14, ...new Uint8Array(18),       // DHT (segment de 20 octets)
+  0xff, 0xc0, 0x00, 0x0b, ...new Uint8Array(9),        // SOF0 (segment de 11 octets)
   0xff, 0xda, 0x00, 0x08, ...new Uint8Array(6),        // SOS (8 octets) → données compressées
-  0x2a, 0x17,
+  0x2a, 0x17, 0xff, 0x00, 0x33,                        // entropy stream (dont un FF échappé)
   0xff, 0xd9,                                          // EOI
 ]);
 const PNG_VALIDE = new Uint8Array([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52, ...new Uint8Array(13), 0, 0, 0, 0,   // IHDR + CRC
-  0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,              // IEND + CRC
+  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,      // IHDR, 13 octets
+  0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0,
+  0x1f, 0x15, 0xc4, 0x89,                              // CRC IHDR
+  0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54,      // IDAT, 10 octets
+  0x78, 0x01, 0x63, 0x60, 0, 0, 0, 2, 0, 1,
+  0x73, 0x75, 0x01, 0x18,                              // CRC IDAT
+  0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,   // IEND + CRC
 ]);
 const WEBP_VALIDE = new Uint8Array([
   0x52, 0x49, 0x46, 0x46, 0x10, 0x00, 0x00, 0x00,      // « RIFF », taille déclarée 16 = total - 8
@@ -126,7 +134,12 @@ const WEBP_VALIDE = new Uint8Array([
 ]);
 
 const jpegDe = (taille: number) => {
-  const entete = [0xff, 0xd8, 0xff, 0xda, 0x00, 0x08, ...new Uint8Array(6)];   // SOI + SOS
+  const entete = [
+    0xff, 0xd8,
+    0xff, 0xc4, 0x00, 0x14, ...new Uint8Array(18),
+    0xff, 0xc0, 0x00, 0x0b, ...new Uint8Array(9),
+    0xff, 0xda, 0x00, 0x08, ...new Uint8Array(6),      // SOI + DHT + SOF0 + SOS
+  ];
   return new Uint8Array([...entete, ...new Uint8Array(taille - entete.length - 2), 0xff, 0xd9]);
 };
 const concat = (a: Uint8Array | number[], b: number[]) => new Uint8Array([...a, ...b]);
@@ -158,6 +171,33 @@ describe('formatImage', () => {
     const svg = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
     expect(formatImage(svg)).toBeNull();
     expect(formatImage(new Uint8Array([0x4d, 0x5a, 0x90, 0, 3, 0, 0, 0]))).toBeNull();   // exécutable PE (« MZ »)
+  });
+
+  it('rejette un JPEG sans cadre SOF ni table de Huffman, et un entropy stream mal formé', () => {
+    const sansSof = new Uint8Array([
+      0xff, 0xd8, 0xff, 0xc4, 0x00, 0x14, ...new Uint8Array(18),
+      0xff, 0xda, 0x00, 0x08, ...new Uint8Array(6), 0x2a, 0xff, 0xd9,
+    ]);
+    expect(formatImage(sansSof)).toBeNull();
+    const marqueurInconnu = new Uint8Array([...JPEG_VALIDE.slice(0, -2), 0xff, 0xc0, 0xff, 0xd9]);
+    expect(formatImage(marqueurInconnu)).toBeNull();   // marqueur inattendu dans le scan
+  });
+
+  it('vérifie le CRC de chaque chunk PNG et exige un IDAT', () => {
+    const corrompu = new Uint8Array(PNG_VALIDE);
+    corrompu[20]! ^= 0xff;                             // un octet d'IHDR modifié, CRC inchangé
+    expect(formatImage(corrompu)).toBeNull();
+    const sansIdat = new Uint8Array([...PNG_VALIDE.slice(0, 33), ...PNG_VALIDE.slice(55)]);
+    expect(formatImage(sansIdat)).toBeNull();          // IHDR + IEND, jamais de données
+  });
+
+  it('rejette un WebP sans chunk image et un chunk tronqué', () => {
+    const vp8xSeul = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x12, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+      0x56, 0x50, 0x38, 0x58, 0x02, 0x00, 0x00, 0x00, 0, 0,   // « VP8X » seul
+    ]);
+    expect(formatImage(vp8xSeul)).toBeNull();
+    expect(formatImage(WEBP_VALIDE.slice(0, 22))).toBeNull();   // chunk VP8 tronqué
   });
 
   it('rejette un fichier vide ou tronqué avant la signature', () => {

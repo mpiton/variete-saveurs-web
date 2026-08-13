@@ -183,12 +183,30 @@ describe('formatImage', () => {
     expect(formatImage(marqueurInconnu)).toBeNull();   // marqueur inattendu dans le scan
   });
 
+  it('rejette un JPEG sans le moindre scan : EOI ne suffit pas', () => {
+    expect(formatImage(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]))).toBeNull();   // SOI + EOI
+    const segmentsSansScan = new Uint8Array([
+      0xff, 0xd8, 0xff, 0xc4, 0x00, 0x14, ...new Uint8Array(18),
+      0xff, 0xc0, 0x00, 0x0b, ...new Uint8Array(9), 0xff, 0xd9,               // DHT + SOF0 + EOI, jamais de SOS
+    ]);
+    expect(formatImage(segmentsSansScan)).toBeNull();
+  });
+
   it('vérifie le CRC de chaque chunk PNG et exige un IDAT', () => {
     const corrompu = new Uint8Array(PNG_VALIDE);
     corrompu[20]! ^= 0xff;                             // un octet d'IHDR modifié, CRC inchangé
     expect(formatImage(corrompu)).toBeNull();
     const sansIdat = new Uint8Array([...PNG_VALIDE.slice(0, 33), ...PNG_VALIDE.slice(55)]);
     expect(formatImage(sansIdat)).toBeNull();          // IHDR + IEND, jamais de données
+  });
+
+  it('rejette un IEND porteur d\'une charge, même avec un CRC exact', () => {
+    const iendCharge = new Uint8Array([
+      ...PNG_VALIDE.slice(0, 55),                      // signature + IHDR + IDAT
+      0x00, 0x00, 0x00, 0x04, 0x49, 0x45, 0x4e, 0x44,  // « IEND » de 4 octets (!)
+      1, 2, 3, 4, 0x4a, 0x9a, 0xed, 0x35,              // charge + CRC exact
+    ]);
+    expect(formatImage(iendCharge)).toBeNull();
   });
 
   it('rejette un WebP sans chunk image et un chunk tronqué', () => {

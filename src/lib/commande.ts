@@ -77,7 +77,7 @@ export const champsManquants = (c: Champs, maintenant: number): string[] => {
 const estJpeg = (o: Uint8Array): boolean => {
   if (o.length < 6 || o[0] !== 0xff || o[1] !== 0xd8) return false;
   let i = 2;
-  let sof = false, table = false;
+  let sof = false, table = false, scan = false;
   while (i + 1 < o.length) {
     if (o[i] !== 0xff) return false;
     let marqueur = o[i + 1]!;
@@ -88,7 +88,8 @@ const estJpeg = (o: Uint8Array): boolean => {
     }
     if (marqueur === 0x00) return false;        // FF 00 n'existe que dans les données
     if (marqueur === 0xd9) {
-      // EOI. Certains encodeurs doublent l'EOI ou ajoutent du bourrage FF : on
+      if (!scan) return false;                  // EOI sans le moindre scan : pas d'image
+      // Certains encodeurs doublent l'EOI ou ajoutent du bourrage FF : on
       // tolère ça, mais aucun autre octet ne peut suivre l'image.
       for (let j = i + 2; j < o.length; j++) if (o[j] !== 0xff && o[j] !== 0xd9) return false;
       return true;
@@ -102,6 +103,7 @@ const estJpeg = (o: Uint8Array): boolean => {
     i += 2 + longueur;
     if (marqueur !== 0xda) continue;
     if (!sof || !table) return false;           // pas de cadre ni de table : pas d'image
+    scan = true;
     while (i + 1 < o.length) {                  // entropy stream jusqu'au prochain marqueur
       if (o[i] !== 0xff) { i++; continue; }
       let suivant = o[i + 1]!;
@@ -152,7 +154,7 @@ const estPng = (o: Uint8Array): boolean => {
     premier = false;
     if (type === 'IDAT') idat = true;
     i += 12 + longueur;
-    if (type === 'IEND') return idat && i === o.length;   // rien d'ajouté après IEND
+    if (type === 'IEND') return longueur === 0 && idat && i === o.length;   // IEND nu, en toute fin
   }
   return false;
 };

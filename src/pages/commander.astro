@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 // Mêmes plafonds que le Worker : le navigateur empêche la saisie, le serveur
 // reste le juge. Sans `maxlength`, un texte trop long ne serait refusé qu'après
 // l'envoi, et l'îlot n'a qu'un message d'échec générique à afficher.
-import { MAX_LONGUEURS } from '../lib/commande';
+import { MAX_LONGUEURS, MOTIF_EMAIL, MOTIF_NOM } from '../lib/commande';
 
 // Le widget anti-spam n'apparaît que si la clé publique est fournie au build.
 // L'ordre d'activation compte : poser d'abord PUBLIC_TURNSTILE_SITEKEY (le widget
@@ -63,12 +63,12 @@ const sitekeyTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY;
         </div>
 
         <div class="duo">
-          <label class="champ"><span>Prénom *</span><input type="text" name="prenom" autocomplete="given-name" required maxlength={MAX_LONGUEURS.prenom} /></label>
-          <label class="champ"><span>Nom *</span><input type="text" name="nom" autocomplete="family-name" required maxlength={MAX_LONGUEURS.nom} /></label>
+          <label class="champ"><span>Prénom *</span><input type="text" name="prenom" autocomplete="given-name" required maxlength={MAX_LONGUEURS.prenom} pattern={MOTIF_NOM} /></label>
+          <label class="champ"><span>Nom *</span><input type="text" name="nom" autocomplete="family-name" required maxlength={MAX_LONGUEURS.nom} pattern={MOTIF_NOM} /></label>
         </div>
         <div class="duo">
           <label class="champ"><span>Téléphone *</span><input type="tel" name="telephone" autocomplete="tel" required maxlength={MAX_LONGUEURS.telephone} /></label>
-          <label class="champ"><span>Email *</span><input type="email" name="email" autocomplete="email" required maxlength={MAX_LONGUEURS.email} /></label>
+          <label class="champ"><span>Email *</span><input type="email" name="email" autocomplete="email" required maxlength={MAX_LONGUEURS.email} pattern={MOTIF_EMAIL} /></label>
         </div>
         <label class="champ">
           <span>Votre profil Facebook (optionnel)</span>
@@ -159,6 +159,8 @@ const sitekeyTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY;
 </style>
 
 <script>
+  import { telephoneValide } from '../lib/commande';
+
   const form = document.getElementById('form-commande') as HTMLFormElement;
   const confirmation = document.getElementById('confirmation') as HTMLElement;
   const erreurGlobale = document.getElementById('erreur-globale') as HTMLElement;
@@ -167,6 +169,7 @@ const sitekeyTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY;
   const adresse = form.elements.namedItem('adresse') as HTMLTextAreaElement;
   const description = form.elements.namedItem('description') as HTMLTextAreaElement;
   const date = form.elements.namedItem('date') as HTMLInputElement;
+  const telephone = form.elements.namedItem('telephone') as HTMLInputElement;
 
   // Pré-remplissage depuis la carte (#produit=). Fragment et non query : une query
   // aurait fait de chaque produit une URL distincte et indexable (voir CarteGroupe).
@@ -263,6 +266,16 @@ const sitekeyTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY;
       email: 'Cette adresse email semble incomplète.',
       '': "Le format attendu n'est pas respecté.",
     },
+    patternMismatch: {
+      prenom: 'Indiquez votre prénom en lettres.',
+      nom: 'Indiquez votre nom en lettres.',
+      email: 'Cette adresse email semble incomplète.',
+      '': "Le format attendu n'est pas respecté.",
+    },
+    customError: {
+      telephone: 'Vérifiez ce numéro : 10 chiffres, ou +indicatif pour un numéro étranger.',
+      '': 'Vérifiez ce champ.',
+    },
     rangeUnderflow: {
       date: 'Choisissez une date à partir de demain.',
       '': 'La valeur est trop basse.',
@@ -315,6 +328,12 @@ const sitekeyTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY;
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     erreurGlobale.hidden = true;
+    // Le Worker juge la valeur rognée : « ␣␣␣ » passerait `required` ici et serait
+    // refusé là-bas, avec pour seul retour le message d'échec générique.
+    form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[type="text"], input[type="tel"], textarea')
+      .forEach((c) => { c.value = c.value.trim(); });
+    // `type="tel"` ne vérifie aucun format : même règle que le Worker.
+    telephone.setCustomValidity(telephone.value && !telephoneValide(telephone.value) ? 'format' : '');
     if (!form.checkValidity()) { afficherErreurs(); return; }
 
     const donnees = new FormData(form);

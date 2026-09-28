@@ -329,8 +329,11 @@ const sitekeyTurnstile = import.meta.env.PUBLIC_TURNSTILE_SITEKEY;
     e.preventDefault();
     erreurGlobale.hidden = true;
     // Le Worker juge la valeur rognée : « ␣␣␣ » passerait `required` ici et serait
-    // refusé là-bas, avec pour seul retour le message d'échec générique.
-    form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[type="text"], input[type="tel"], textarea')
+    // refusé là-bas, avec pour seul retour le message d'échec générique. Le piège
+    // #site reste brut : des espaces y trahissent un robot, le Worker doit les voir.
+    form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+      'input[type="text"]:not(#site), input[type="tel"], input[type="email"], textarea',
+    )
       .forEach((c) => { c.value = c.value.trim(); });
     // `type="tel"` ne vérifie aucun format : même règle que le Worker.
     telephone.setCustomValidity(telephone.value && !telephoneValide(telephone.value) ? 'format' : '');

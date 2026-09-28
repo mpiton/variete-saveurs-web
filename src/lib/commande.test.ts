@@ -72,6 +72,30 @@ describe('champsManquants', () => {
       expect(champsManquants({ ...valide(), email }, MAINTENANT), email).toContain('email');
     }
   });
+
+  it('accepte les écritures courantes d\'un téléphone', () => {
+    for (const telephone of [
+      '0516483243', '05 16 48 32 43', '05.16.48.32.43', '05-16-48-32-43',
+      '+33 5 16 48 32 43', '+33 (0)5 16 48 32 43', '0033516483243',
+      '+44 7700 900123', '0044 7700 900123', '+1 (555) 123-4567',
+    ]) {
+      expect(champsManquants({ ...valide(), telephone }, MAINTENANT), telephone).toEqual([]);
+    }
+  });
+
+  it('refuse un téléphone qui n\'en est pas un', () => {
+    for (const telephone of [
+      'abc', '0000000000', '051648324', '05164832431', '5 16 48 32 43', '06 12 34 56 7a',
+      '+33 5 16 48 32', '+33 5 16 48 32 43 1', '+123', '06 12 34 56 78 ou 07 12 34 56 78',
+    ]) {
+      expect(champsManquants({ ...valide(), telephone }, MAINTENANT), telephone).toContain('telephone');
+    }
+  });
+
+  it('exige au moins une lettre dans le prénom et le nom', () => {
+    expect(champsManquants({ ...valide(), prenom: '123', nom: '.' }, MAINTENANT)).toEqual(['prenom', 'nom']);
+    expect(champsManquants({ ...valide(), prenom: 'Jean-Éric', nom: "N'Diaye" }, MAINTENANT)).toEqual([]);
+  });
 });
 
 describe('champsManquants — longueurs', () => {

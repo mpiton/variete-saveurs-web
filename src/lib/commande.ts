@@ -34,6 +34,26 @@ export const MAX_LONGUEURS = {
   facebook: 300,
 } as const;
 
+// Motifs partagés avec les attributs `pattern` du formulaire : le navigateur
+// refuse ce que le Worker refuserait, au lieu d'un échec générique après envoi.
+// Un nom sans la moindre lettre (« 123 », « . ») n'en est pas un.
+export const MOTIF_NOM = '.*\\p{L}.*';
+// `type="email"` accepte « a@b » ; le Worker exige un point dans le domaine.
+export const MOTIF_EMAIL = '[^\\s@]+@[^\\s@]+\\.[^\\s@]+';
+
+/**
+ * Séparateurs usuels ignorés, on accepte : un numéro français à 10 chiffres
+ * (06 12 34 56 78), le même en +33/0033 avec ou sans « (0) », ou un numéro
+ * étranger en +/00 de 8 à 15 chiffres (E.164) — la clientèle compte des
+ * résidents britanniques.
+ */
+export const telephoneValide = (t: string): boolean => {
+  const n = t.replace(/[\s.\-()]/g, '');
+  if (/^0[1-9]\d{8}$/.test(n)) return true;
+  if (/^(?:\+|00)33/.test(n)) return /^(?:\+|00)330?[1-9]\d{8}$/.test(n);
+  return /^(?:\+|00)[1-9]\d{7,14}$/.test(n);
+};
+
 /** Les champs refusés, dans l'ordre du formulaire. Vide = demande recevable. */
 export const champsManquants = (c: Champs, maintenant: number): string[] => {
   const manquants: string[] = [];
@@ -48,10 +68,11 @@ export const champsManquants = (c: Champs, maintenant: number): string[] => {
   }
   if (c.remise !== 'retrait' && c.remise !== 'livraison') manquants.push('remise');
   if (c.remise === 'livraison' && (!c.adresse || trop('adresse'))) manquants.push('adresse');
-  if (!c.prenom || trop('prenom')) manquants.push('prenom');
-  if (!c.nom || trop('nom')) manquants.push('nom');
-  if (!c.telephone || trop('telephone')) manquants.push('telephone');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email) || trop('email')) manquants.push('email');
+  const nomValide = (v: string) => new RegExp(`^${MOTIF_NOM}$`, 'u').test(v);
+  if (!nomValide(c.prenom) || trop('prenom')) manquants.push('prenom');
+  if (!nomValide(c.nom) || trop('nom')) manquants.push('nom');
+  if (!telephoneValide(c.telephone) || trop('telephone')) manquants.push('telephone');
+  if (!new RegExp(`^${MOTIF_EMAIL}$`).test(c.email) || trop('email')) manquants.push('email');
   if (trop('facebook')) manquants.push('facebook');   // optionnel : seule la longueur est bornée
   return manquants;
 };

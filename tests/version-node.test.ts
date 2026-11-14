@@ -14,7 +14,7 @@ import { parse } from 'yaml';
 // (elle l'emporte sur .nvmrc), et elle se change à la main en même temps que
 // ce fichier.
 const lire = (chemin: string): string =>
-  readFileSync(new URL(`../${chemin}`, import.meta.url).pathname, 'utf8');
+  readFileSync(new URL(`../${chemin}`, import.meta.url), 'utf8');
 
 const nvmrc = lire('.nvmrc').trim();
 
